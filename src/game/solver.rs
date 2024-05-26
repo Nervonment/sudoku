@@ -205,7 +205,7 @@ impl SudokuSolverH {
 
     // 获取下一步行动的集合，其中元素为 (r, c, num)
     // 如果再填一步就会违反约束，或者棋盘满了，返回 None
-    pub fn next_steps(&self) -> Option<Vec<(i8, i8, i8)>> {
+    fn next_steps(&self) -> Option<Vec<(i8, i8, i8)>> {
         // 令 A_R(r, num) 为第 r 行中数字 num 可能填的位置的集合
         // 令 A_C(c, num) 为第 c 列中数字 num 可能填的位置的集合
         // 令 A_B(b, num) 为第 b 宫中数字 num 可能填的位置的集合
@@ -294,6 +294,11 @@ impl SudokuSolverH {
             return None;
         }
         Some(least_viable_options)
+    }
+
+    pub fn get_next_steps(&mut self) -> Option<Vec<(i8, i8, i8)>> {
+        self.init_search();
+        self.next_steps()
     }
 }
 

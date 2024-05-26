@@ -2,7 +2,7 @@ use std::io;
 
 use crossterm::{
     cursor::MoveTo,
-    style::{PrintStyledContent, Stylize},
+    style::{Print, PrintStyledContent, Stylize},
     terminal::{size, Clear},
     ExecutableCommand, QueueableCommand,
 };
@@ -99,27 +99,30 @@ pub fn draw_current_grid(r: i8, c: i8) -> io::Result<()> {
     Ok(())
 }
 
+fn num_2_char(num: i8) -> char {
+    [' ', '1', '2', '3', '4', '5', '6', '7', '8', '9'][num as usize]
+}
+
 pub fn draw_numbers(
     puzzle: &[[i8; 9]; 9],
     player_solution: &[[i8; 9]; 9],
     valid_cond: &[[bool; 9]; 9],
 ) -> io::Result<()> {
     let mut stdout = io::stdout();
-    let chs = [' ', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
     for r in 0..9 {
         for c in 0..9 {
             stdout.queue(MoveTo(c * 4 + 2, r * 2 + 1))?;
             if puzzle[r as usize][c as usize] > 0 {
                 stdout.queue(PrintStyledContent(if valid_cond[r as usize][c as usize] {
-                    chs[puzzle[r as usize][c as usize] as usize].white().bold()
+                    num_2_char(puzzle[r as usize][c as usize]).white().bold()
                 } else {
-                    chs[puzzle[r as usize][c as usize] as usize].red().bold()
+                    num_2_char(puzzle[r as usize][c as usize]).red().bold()
                 }))?;
             } else {
                 stdout.queue(PrintStyledContent(if valid_cond[r as usize][c as usize] {
-                    chs[player_solution[r as usize][c as usize] as usize].yellow()
+                    num_2_char(player_solution[r as usize][c as usize]).yellow()
                 } else {
-                    chs[player_solution[r as usize][c as usize] as usize]
+                    num_2_char(player_solution[r as usize][c as usize])
                         .red()
                         .dim()
                 }))?;
@@ -146,8 +149,30 @@ pub fn draw_instructions() -> io::Result<()> {
         .execute(PrintStyledContent("退格".bold().grey()))?
         .execute(PrintStyledContent(": 清除所有错误格".white()))?
         .execute(MoveTo(42, 11))?
+        .execute(PrintStyledContent("Tab".bold().grey()))?
+        .execute(PrintStyledContent(": 查看提示".white()))?
+        .execute(MoveTo(42, 12))?
         .execute(PrintStyledContent("Esc".bold().grey()))?
         .execute(PrintStyledContent(": 回到标题画面".white()))?;
+    Ok(())
+}
+
+pub fn draw_hint(steps: &Vec<(i8, i8, i8)>, can_move: bool) -> io::Result<()> {
+    let mut stdout = io::stdout();
+    if can_move {
+        for (r, c, num) in steps {
+            stdout
+                .queue(MoveTo(*c as u16 * 4 + 2, *r as u16 * 2 + 1))?
+                .queue(PrintStyledContent(num_2_char(*num).blue().dim()))?;
+        }
+        stdout
+            .queue(MoveTo(0, 20))?
+            .queue(Clear(crossterm::terminal::ClearType::CurrentLine))?;
+    } else {
+        stdout.queue(MoveTo(0, 20))?.queue(PrintStyledContent(
+            "已经没有可以填的数字了，请尝试删除一些数字".white(),
+        ))?;
+    }
     Ok(())
 }
 

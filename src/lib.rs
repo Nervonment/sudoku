@@ -12,12 +12,14 @@ use std::{
 use crossterm::{
     event::{poll, read, Event, KeyCode, KeyEventKind},
     terminal::Clear,
-    ExecutableCommand,
+    ExecutableCommand
 };
-use game::{generator::random_sudoku_puzzle, judge::judge_sudoku, utils::next_blank};
+use game::{
+    generator::random_sudoku_puzzle, judge::judge_sudoku, solver::SudokuSolverH, utils::next_blank,
+};
 use ui::{
-    draw_current_grid, draw_grid, draw_instructions, draw_numbers, draw_result, draw_settings,
-    draw_titlescreen,
+    draw_current_grid, draw_grid, draw_hint, draw_instructions, draw_numbers, draw_result,
+    draw_settings, draw_titlescreen,
 };
 
 #[derive(Debug)]
@@ -116,6 +118,8 @@ impl Game {
             let mut current_grid = next_blank(0, 0, &puzzle).unwrap();
             let mut valid_cond = [[true; 9]; 9];
             let mut solved = false;
+            let mut hint = vec![];
+            let mut can_move = true;
 
             draw_instructions()?;
 
@@ -127,6 +131,7 @@ impl Game {
                         if event.kind == KeyEventKind::Press {
                             match event.code {
                                 KeyCode::Char(ch) => {
+                                    hint.clear();
                                     if ch >= '1'
                                         && ch <= '9'
                                         && puzzle[current_grid.0 as usize][current_grid.1 as usize]
@@ -178,6 +183,7 @@ impl Game {
                                     }
                                 }
                                 KeyCode::Backspace => {
+                                    hint.clear();
                                     for r in 0..9 {
                                         for c in 0..9 {
                                             if !valid_cond[r][c] && puzzle[r][c] == 0 {
@@ -186,6 +192,16 @@ impl Game {
                                         }
                                     }
                                     (_, solved, valid_cond) = judge_sudoku(&player_solution);
+                                }
+                                KeyCode::Tab => {
+                                    let mut solver = SudokuSolverH::new(player_solution);
+                                    let next_steps = solver.get_next_steps();
+                                    if next_steps == None {
+                                        can_move = false;
+                                    } else {
+                                        can_move = true;
+                                        hint = next_steps.unwrap();
+                                    }
                                 }
                                 KeyCode::Esc => {
                                     should_quit = true;
@@ -199,6 +215,7 @@ impl Game {
                 draw_grid()?;
                 draw_current_grid(current_grid.0, current_grid.1)?;
                 draw_numbers(&puzzle, &player_solution, &valid_cond)?;
+                draw_hint(&hint, can_move)?;
                 stdout.flush()?;
             }
 
