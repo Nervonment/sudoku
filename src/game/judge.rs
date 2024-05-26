@@ -5,7 +5,7 @@ use super::utils::coord_2_block;
 //     board是否为有效的完全解
 //     board中违反约束的格子
 // )
-pub fn judge_sudoku(board: [[i8; 9]; 9]) -> (bool, bool, [[bool; 9]; 9]) {
+pub fn judge_sudoku(board: &[[i8; 9]; 9]) -> (bool, bool, [[bool; 9]; 9]) {
     let mut row: [[(i8, i8); 10]; 9] = [[(-1, -1); 10]; 9];
     let mut col: [[(i8, i8); 10]; 9] = [[(-1, -1); 10]; 9];
     let mut block: [[(i8, i8); 10]; 9] = [[(-1, -1); 10]; 9];

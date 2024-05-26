@@ -1,4 +1,6 @@
 pub mod game;
+#[cfg(test)]
+pub mod test;
 pub mod ui;
 
 use std::{
@@ -132,7 +134,7 @@ impl Game {
                                     {
                                         player_solution[current_grid.0 as usize]
                                             [current_grid.1 as usize] = ch as i8 - 48;
-                                        (_, solved, valid_cond) = judge_sudoku(player_solution);
+                                        (_, solved, valid_cond) = judge_sudoku(&player_solution);
                                         if valid_cond[current_grid.0 as usize]
                                             [current_grid.1 as usize]
                                         {
@@ -150,7 +152,8 @@ impl Game {
                                         {
                                             player_solution[current_grid.0 as usize]
                                                 [current_grid.1 as usize] = 0;
-                                            (_, solved, valid_cond) = judge_sudoku(player_solution);
+                                            (_, solved, valid_cond) =
+                                                judge_sudoku(&player_solution);
                                         }
                                     }
                                 }
@@ -182,7 +185,7 @@ impl Game {
                                             }
                                         }
                                     }
-                                    (_, solved, valid_cond) = judge_sudoku(player_solution);
+                                    (_, solved, valid_cond) = judge_sudoku(&player_solution);
                                 }
                                 KeyCode::Esc => {
                                     should_quit = true;
