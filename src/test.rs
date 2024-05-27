@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use crate::game::{
     generator::random_sudoku_puzzle,
     judge::judge_sudoku,
@@ -8,8 +6,6 @@ use crate::game::{
 
 #[test]
 fn solver_benchmark() {
-    let mut solver_s_time_ms = 0;
-    let mut solver_h_time_ms = 0;
     for _ in 0..10 {
         let puzzle = random_sudoku_puzzle(60);
 
@@ -25,19 +21,5 @@ fn solver_benchmark() {
         // 两个Solver给出的解是满足约束的完全解
         assert!(judge_sudoku(&solution_solver_s).1);
         assert!(judge_sudoku(&solution_solver_h).1);
-
-        let start = Instant::now();
-        for _ in 0..10 {
-            solver_s.have_unique_solution();
-        }
-        solver_s_time_ms += start.elapsed().as_millis();
-
-        let start = Instant::now();
-        for _ in 0..10 {
-            solver_h.have_unique_solution();
-        }
-        solver_h_time_ms += start.elapsed().as_millis();
     }
-    println!("solver_s: {}ms", solver_s_time_ms);
-    println!("solver_h: {}ms", solver_h_time_ms);
 }

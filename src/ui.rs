@@ -2,7 +2,7 @@ use std::io;
 
 use crossterm::{
     cursor::MoveTo,
-    style::{Print, PrintStyledContent, Stylize},
+    style::{PrintStyledContent, Stylize},
     terminal::{size, Clear},
     ExecutableCommand, QueueableCommand,
 };
