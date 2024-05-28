@@ -2,6 +2,7 @@
 name = "sudoku"
 version = "0.1.0"
 edition = "2021"
+default-run = "sudoku"
 
 [dependencies]
 criterion = "0.5.1"
@@ -11,3 +12,8 @@ rand = "0.8.5"
 [[bench]]
 name = "benchmark"
 harness = false
+
+[[bin]]
+name = "example"
+test = false
+bench = false

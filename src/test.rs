@@ -1,13 +1,13 @@
 use crate::game::{
-    generator::random_sudoku_puzzle,
+    generator::random_sudoku_puzzle_normal,
     judge::judge_sudoku,
     solver::{SudokuSolver, SudokuSolverH, SudokuSolverS},
 };
 
 #[test]
-fn solver_benchmark() {
-    for _ in 0..10 {
-        let puzzle = random_sudoku_puzzle(60);
+fn solver() {
+    for _ in 0..100 {
+        let puzzle = random_sudoku_puzzle_normal();
 
         let mut solver_s = SudokuSolverS::new(puzzle);
         let mut solver_h = SudokuSolverH::new(puzzle);

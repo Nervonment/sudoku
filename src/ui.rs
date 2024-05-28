@@ -7,6 +7,8 @@ use crossterm::{
     ExecutableCommand, QueueableCommand,
 };
 
+use crate::game::hint::{hidden_single, naked_single};
+
 pub fn draw_grid() -> io::Result<()> {
     let mut stdout = io::stdout();
     for y in 0..19 {
@@ -136,15 +138,18 @@ pub fn draw_instructions() -> io::Result<()> {
     let mut stdout = io::stdout();
     stdout.execute(Clear(crossterm::terminal::ClearType::All))?;
     stdout
-        .execute(MoveTo(42, 7))?
+        .execute(MoveTo(42, 6))?
         .execute(PrintStyledContent("←↓↑→".bold().grey()))?
         .execute(PrintStyledContent(": 移动".white()))?
-        .execute(MoveTo(42, 8))?
+        .execute(MoveTo(42, 7))?
         .execute(PrintStyledContent("1~9".bold().grey()))?
         .execute(PrintStyledContent(": 填入数字".white()))?
-        .execute(MoveTo(42, 9))?
+        .execute(MoveTo(42, 8))?
         .execute(PrintStyledContent("空格".bold().grey()))?
         .execute(PrintStyledContent(": 清除当前格".white()))?
+        .execute(MoveTo(42, 9))?
+        .execute(PrintStyledContent("< >".bold().grey()))?
+        .execute(PrintStyledContent(": 撤销 重做".white()))?
         .execute(MoveTo(42, 10))?
         .execute(PrintStyledContent("退格".bold().grey()))?
         .execute(PrintStyledContent(": 清除所有错误格".white()))?
@@ -157,22 +162,34 @@ pub fn draw_instructions() -> io::Result<()> {
     Ok(())
 }
 
-pub fn draw_hint(steps: &Vec<(i8, i8, i8)>, can_move: bool) -> io::Result<()> {
+pub fn draw_hint(board: &[[i8; 9]; 9], show_hint: bool) -> io::Result<()> {
     let mut stdout = io::stdout();
-    if can_move {
-        for (r, c, num) in steps {
-            stdout
-                .queue(MoveTo(*c as u16 * 4 + 2, *r as u16 * 2 + 1))?
-                .queue(PrintStyledContent(num_2_char(*num).blue().dim()))?;
+    if show_hint {
+        let mut step = hidden_single(board);
+        if step.is_none() {
+            step = naked_single(board);
         }
+        if step.is_none() {
+            stdout
+                .queue(MoveTo(0, 20))?
+                .queue(PrintStyledContent("无可用提示".white()))?;
+            return Ok(());
+        }
+
+        let step = step.unwrap();
+        let (r, c, num) = step.0;
+        stdout
+            .queue(MoveTo(c as u16 * 4 + 2, r as u16 * 2 + 1))?
+            .queue(PrintStyledContent(num_2_char(num).blue().dim()))?;
+        stdout
+            .queue(MoveTo(0, 20))?
+            .queue(PrintStyledContent(step.1.white()))?;
+    } else {
         stdout
             .queue(MoveTo(0, 20))?
             .queue(Clear(crossterm::terminal::ClearType::CurrentLine))?;
-    } else {
-        stdout.queue(MoveTo(0, 20))?.queue(PrintStyledContent(
-            "已经没有可以填的数字了，请尝试删除一些数字".white(),
-        ))?;
     }
+
     Ok(())
 }
 

@@ -1,6 +1,10 @@
+use std::vec;
+
 use crate::game::utils::{coord_2_block, next_blank};
 
 use rand::prelude::*;
+
+use super::utils::block_idx_2_coord;
 
 pub trait SudokuSolver {
     // 获取任意一个解
@@ -121,13 +125,15 @@ impl SudokuSolver for SudokuSolverS {
 }
 
 pub struct SudokuSolverH {
-    board: [[i8; 9]; 9],    // 棋盘
+    board: [[i8; 9]; 9], // 棋盘
+
     row: [[bool; 10]; 9],   // row[r][num] = 第r行是否存在数num
     col: [[bool; 10]; 9],   // 同理
     block: [[bool; 10]; 9], // 同理
-
     tmp_board: [[i8; 9]; 9],
     solution_cnt: i32, // 解的数量
+    pub invoke_cnt: i32,
+    pub unsure_cnt: i32,
 }
 
 impl SudokuSolverH {
@@ -139,15 +145,17 @@ impl SudokuSolverH {
             block: [[false; 10]; 9],
             tmp_board: board,
             solution_cnt: 0,
+            invoke_cnt: 0,
+            unsure_cnt: 0,
         }
     }
 
     pub fn init_search(&mut self) {
+        self.solution_cnt = 0;
         self.tmp_board = self.board;
         self.row = [[false; 10]; 9];
         self.col = [[false; 10]; 9];
         self.block = [[false; 10]; 9];
-        self.solution_cnt = 0;
         for r in 0..9 {
             for c in 0..9 {
                 self.row[r][self.board[r][c] as usize] = true;
@@ -163,6 +171,7 @@ impl SudokuSolverH {
         shut_while_found: bool,     // 第一次搜索到解时结束搜索
         shut_while_found_2nd: bool, // 第二次搜索到解时结束搜索（用于判断唯一解）
     ) -> bool {
+        self.invoke_cnt += 1;
         let next_steps = self.next_steps();
         if next_steps == None {
             // 当前无法继续填充，且棋盘未满，则抵达非解叶节点
@@ -178,6 +187,9 @@ impl SudokuSolverH {
             return true;
         }
         let next_steps = next_steps.unwrap();
+        if next_steps.len() > 1 {
+            self.unsure_cnt += 1;
+        }
 
         for (r, c, num) in next_steps {
             let b = coord_2_block(r, c);
@@ -276,7 +288,7 @@ impl SudokuSolverH {
                 if !self.block[b][num] {
                     let mut cur_viable_options = vec![]; // A_B(b, num)
                     for idx_in_b in 0..9 {
-                        let (r, c) = (b / 3 * 3 + idx_in_b / 3, b % 3 * 3 + idx_in_b % 3);
+                        let (r, c) = block_idx_2_coord(b, idx_in_b);
                         if self.tmp_board[r][c] == 0 && !self.row[r][num] && !self.col[c][num] {
                             hit = true;
                             cur_viable_options.push((r as i8, c as i8, num as i8));
