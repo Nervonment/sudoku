@@ -19,12 +19,19 @@ pub trait Fillable {
 }
 
 pub struct SudokuPuzzle {
-    pub board: [[i8; 9]; 9],
+    board: [[i8; 9]; 9],
     candidates: [[[bool; 10]; 9]; 9],
     candidate_cnt: [[i8; 9]; 9],
-    pub grid_cnt_for_candidate_in_row: [[i8; 10]; 9],
+    grid_cnt_for_candidate_in_row: [[i8; 10]; 9],
     grid_cnt_for_candidate_in_col: [[i8; 10]; 9],
     grid_cnt_for_candidate_in_blk: [[i8; 10]; 9],
+    history: Vec<(
+        [[[bool; 10]; 9]; 9],
+        [[i8; 9]; 9],
+        [[i8; 10]; 9],
+        [[i8; 10]; 9],
+        [[i8; 10]; 9],
+    )>,
 }
 
 impl TrackingCandidates for SudokuPuzzle {
@@ -58,7 +65,17 @@ impl TrackingCandidates for SudokuPuzzle {
 }
 
 impl Fillable for SudokuPuzzle {
+    // 在格 (r, c) 处填上 num
     fn fill_grid(&mut self, r: usize, c: usize, num: i8) {
+        // 记录历史状态
+        self.history.push((
+            self.candidates,
+            self.candidate_cnt,
+            self.grid_cnt_for_candidate_in_row,
+            self.grid_cnt_for_candidate_in_col,
+            self.grid_cnt_for_candidate_in_blk,
+        ));
+
         self.board[r][c] = num;
         let num = num as usize;
         let b = coord_2_block(r, c);
@@ -79,7 +96,7 @@ impl Fillable for SudokuPuzzle {
         }
 
         // 更新 grid_cnt_for_candidate_in_xxx
-        
+
         // 因为当前格子被填上，所以它所在行的候选数包括 num1 的格子数都要减少1，
         // 其中 num1 是当前格子的所有候选数
         for num1 in 1..=9 {
@@ -115,27 +132,17 @@ impl Fillable for SudokuPuzzle {
         }
     }
 
+    // 撤销上一步填充
     fn unfill_grid(&mut self, r: usize, c: usize) {
-        let num = self.board[r][c] as usize;
+        // 回退
         self.board[r][c] = 0;
-        self.candidates[r][c] = [true; 10];
-        for c1 in 0..9 {
-            self.candidate_cnt[r][c1] += !self.candidates[r][c1][num] as i8;
-            self.grid_cnt_for_candidate_in_row[r][num] += !self.candidates[r][c1][num] as i8;
-            self.candidates[r][c1][num] = true;
-        }
-        for r1 in 0..9 {
-            self.candidate_cnt[r1][c] += !self.candidates[r1][c][num] as i8;
-            self.grid_cnt_for_candidate_in_col[c][num] += !self.candidates[r1][c][num] as i8;
-            self.candidates[r1][c][num] = true;
-        }
-        let b = coord_2_block(r, c);
-        for bidx in 0..9 {
-            let (r1, c1) = block_idx_2_coord(b, bidx);
-            self.candidate_cnt[r1][c1] += !self.candidates[r1][c1][num] as i8;
-            self.grid_cnt_for_candidate_in_col[b][num] += !self.candidates[r1][c1][num] as i8;
-            self.candidates[r1][c1][num] = true;
-        }
+        (
+            self.candidates,
+            self.candidate_cnt,
+            self.grid_cnt_for_candidate_in_row,
+            self.grid_cnt_for_candidate_in_col,
+            self.grid_cnt_for_candidate_in_blk,
+        ) = self.history.pop().unwrap();
     }
 }
 
@@ -148,6 +155,7 @@ impl SudokuPuzzle {
             grid_cnt_for_candidate_in_row: [[9; 10]; 9],
             grid_cnt_for_candidate_in_col: [[9; 10]; 9],
             grid_cnt_for_candidate_in_blk: [[9; 10]; 9],
+            history: vec![],
         };
         for r in 0..9 {
             for c in 0..9 {

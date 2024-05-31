@@ -1,20 +1,39 @@
+use rand::random;
+
 use crate::{
-    game::generator::{random_sudoku_puzzle_easy},
+    game::generator::random_sudoku_puzzle_easy,
     neo::{
         puzzle::{SudokuPuzzle, TrackingCandidates},
         utils::{block_idx_2_coord, coord_2_block_idx},
     },
 };
 
+use super::puzzle::Fillable;
+
 #[test]
 fn sudoku_puzzle() {
     for _ in 0..100 {
         let puzzle = random_sudoku_puzzle_easy();
-        let puzzle = SudokuPuzzle::new(puzzle);
+        let mut puzzle = SudokuPuzzle::new(puzzle);
+
+        let mut moves = vec![];
+        for _ in 0..10 {
+            let (mut r, mut c) = (random::<usize>() % 9, random::<usize>() % 9);
+            while puzzle.grid_val(r, c) > 0 {
+                (r, c) = (random::<usize>() % 9, random::<usize>() % 9);
+            }
+            let num = (random::<u8>() % 9 + 1) as i8;
+            moves.push((r, c));
+            puzzle.fill_grid(r, c, num);
+        }
+        while !moves.is_empty(){
+            let (r,c) = moves.pop().unwrap();
+            puzzle.unfill_grid(r, c);
+        }
+
         for r in 0..9 {
             for c in 0..9 {
                 let (b, bidx) = coord_2_block_idx(r, c);
-
                 // 如果格 (r,c) 已经填上数 num，那么同行、同列和同宫的空格子的候选数都不包含 num
                 let num = puzzle.grid_val(r, c);
                 if num > 0 {
