@@ -1,5 +1,10 @@
 use super::utils::{block_idx_2_coord, coord_2_block};
 
+pub trait Grid {
+    fn grid_val(&self, r: usize, c: usize) -> i8;
+    fn is_grid_empty(&self, r: usize, c: usize) -> bool;
+}
+
 pub trait TrackingCandidates {
     fn is_candidate_of(&self, r: usize, c: usize, num: i8) -> bool;
 
@@ -162,8 +167,13 @@ impl SudokuPuzzle {
         }
         res
     }
+}
 
-    pub fn grid_val(&self, r: usize, c: usize) -> i8 {
+impl Grid for SudokuPuzzle {
+    fn grid_val(&self, r: usize, c: usize) -> i8 {
         self.board[r][c]
+    }
+    fn is_grid_empty(&self, r: usize, c: usize) -> bool {
+        self.board[r][c] == 0
     }
 }

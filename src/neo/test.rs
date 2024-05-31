@@ -8,7 +8,7 @@ use crate::{
     },
 };
 
-use super::puzzle::Fillable;
+use super::puzzle::{Fillable, Grid};
 
 #[test]
 fn sudoku_puzzle() {
