@@ -2,6 +2,7 @@ pub mod game;
 #[cfg(test)]
 pub mod test;
 pub mod ui;
+pub mod neo;
 
 use std::{
     io::{self, Write},
