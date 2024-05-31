@@ -63,6 +63,7 @@ impl Fillable for SudokuPuzzle {
         let num = num as usize;
         let b = coord_2_block(r, c);
 
+        // 更新 candidates 和 candidate_cnt
         for c1 in 0..9 {
             self.candidate_cnt[r][c1] -= self.candidates[r][c1][num] as i8;
             self.candidates[r][c1][num] = false;
@@ -77,7 +78,10 @@ impl Fillable for SudokuPuzzle {
             self.candidates[r1][c1][num] = false;
         }
 
-        // 一旦填了一个新的数， grid_cnt 就需要全局更新
+        // 更新 grid_cnt_for_candidate_in_xxx
+        
+        // 因为当前格子被填上，所以它所在行的候选数包括 num1 的格子数都要减少1，
+        // 其中 num1 是当前格子的所有候选数
         for num1 in 1..=9 {
             if self.candidates[r][c][num1] {
                 self.grid_cnt_for_candidate_in_row[r][num1] -= 1;
@@ -85,6 +89,8 @@ impl Fillable for SudokuPuzzle {
                 self.grid_cnt_for_candidate_in_blk[b][num1] -= 1;
             }
         }
+        // 对于所有行、所有列、9个宫其中的5个（这里为了行文方便，所有宫都更新了），
+        // 它们中的候选数包括所填数 num 的格子的数量都可能发生变化，需要更新
         for r in 0..9 {
             let mut grid_cnt = 0;
             for c in 0..9 {
@@ -117,17 +123,11 @@ impl Fillable for SudokuPuzzle {
             self.candidate_cnt[r][c1] += !self.candidates[r][c1][num] as i8;
             self.grid_cnt_for_candidate_in_row[r][num] += !self.candidates[r][c1][num] as i8;
             self.candidates[r][c1][num] = true;
-            // let num1 = self.board[r][c1] as usize;
-            // self.candidate_cnt[r][c] -= self.candidates[r][c][num1] as i8;
-            // self.candidates[r][c][num1] = false;
         }
         for r1 in 0..9 {
             self.candidate_cnt[r1][c] += !self.candidates[r1][c][num] as i8;
             self.grid_cnt_for_candidate_in_col[c][num] += !self.candidates[r1][c][num] as i8;
             self.candidates[r1][c][num] = true;
-            // let num1 = self.board[r1][c] as usize;
-            // self.candidate_cnt[r][c] -= self.candidates[r][c][num1] as i8;
-            // self.candidates[r][c][num1] = false;
         }
         let b = coord_2_block(r, c);
         for bidx in 0..9 {
@@ -135,9 +135,6 @@ impl Fillable for SudokuPuzzle {
             self.candidate_cnt[r1][c1] += !self.candidates[r1][c1][num] as i8;
             self.grid_cnt_for_candidate_in_col[b][num] += !self.candidates[r1][c1][num] as i8;
             self.candidates[r1][c1][num] = true;
-            // let num1 = self.board[r1][c1] as usize;
-            // self.candidate_cnt[r][c] -= self.candidates[r][c][num1] as i8;
-            // self.candidates[r][c][num1] = false;
         }
     }
 }
