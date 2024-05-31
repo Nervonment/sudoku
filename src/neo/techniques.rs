@@ -56,3 +56,18 @@ pub fn hidden_single_blk(puzzle: &(impl Grid + TrackingCandidates)) -> Option<(u
         block_idx_2_coord,
     )
 }
+
+pub fn naked_single(puzzle: &(impl Grid + TrackingCandidates)) -> Option<(usize, usize, i8)> {
+    for r in 0..9 {
+        for c in 0..9 {
+            if puzzle.is_grid_empty(r, c) && puzzle.candidate_cnt_for_grid(r, c) == 1 {
+                let num = (1..=9)
+                    .filter(|num| puzzle.is_candidate_of(r, c, *num))
+                    .next()
+                    .unwrap();
+                return Some((r, c, num));
+            }
+        }
+    }
+    None
+}

@@ -8,6 +8,7 @@ pub trait Grid {
 pub trait TrackingCandidates {
     fn is_candidate_of(&self, r: usize, c: usize, num: i8) -> bool;
 
+    fn candidate_cnt_for_grid(&self, r: usize, c: usize) -> i8;
     fn candidate_cnt_for_grid_in_row(&self, r: usize, c: usize) -> i8;
     fn candidate_cnt_for_grid_in_col(&self, c: usize, r: usize) -> i8;
     fn candidate_cnt_for_grid_in_blk(&self, b: usize, bidx: usize) -> i8;
@@ -43,6 +44,9 @@ impl TrackingCandidates for SudokuPuzzle {
         self.candidates[r][c][num as usize]
     }
 
+    fn candidate_cnt_for_grid(&self, r: usize, c: usize) -> i8 {
+        self.candidate_cnt[r][c]
+    }
     fn candidate_cnt_for_grid_in_row(&self, r: usize, c: usize) -> i8 {
         self.candidate_cnt[r][c]
     }
