@@ -71,3 +71,71 @@ pub fn naked_single(puzzle: &(impl Grid + TrackingCandidates)) -> Option<(usize,
     }
     None
 }
+
+fn hidden_pair<T, F1, F2>(
+    puzzle: &T,
+    grid_cnt_for_candidate: F1,
+    coord_transform: F2,
+) -> Option<((usize, usize), (usize, usize), i8, i8)>
+where
+    T: Grid + TrackingCandidates,
+    F1: Fn(&T, usize, i8) -> i8,
+    F2: Fn(usize, usize) -> (usize, usize),
+{
+    for i in 0..9 {
+        let nums: Vec<i8> = (1..=9)
+            .filter(|num| grid_cnt_for_candidate(puzzle, i, *num) == 2)
+            .collect();
+        for i1 in 0..nums.len() {
+            for i2 in 0..i1 {
+                if (0..9).all(|j| {
+                    let (r, c) = coord_transform(i, j);
+                    !puzzle.is_grid_empty(r, c)
+                        || puzzle.is_candidate_of(r, c, nums[i1])
+                            == puzzle.is_candidate_of(r, c, nums[i2])
+                }) {
+                    let mut jiter = (0..9).filter(|j| {
+                        let (r, c) = coord_transform(i, *j);
+                        puzzle.is_grid_empty(r, c) && puzzle.is_candidate_of(r, c, nums[i1])
+                    });
+                    let j1 = jiter.next().unwrap();
+                    let j2 = jiter.next().unwrap();
+                    let grid1 = coord_transform(i, j1);
+                    let grid2 = coord_transform(i, j2);
+                    return Some((grid1, grid2, nums[i1], nums[i2]));
+                }
+            }
+        }
+    }
+    None
+}
+
+pub fn hidden_pair_row(
+    puzzle: &(impl Grid + TrackingCandidates),
+) -> Option<((usize, usize), (usize, usize), i8, i8)> {
+    hidden_pair(
+        puzzle,
+        |p, r, num| p.grid_cnt_for_candidate_in_row(r, num),
+        |r, c| (r, c),
+    )
+}
+
+pub fn hidden_pair_col(
+    puzzle: &(impl Grid + TrackingCandidates),
+) -> Option<((usize, usize), (usize, usize), i8, i8)> {
+    hidden_pair(
+        puzzle,
+        |p, c, num| p.grid_cnt_for_candidate_in_col(c, num),
+        |c, r| (r, c),
+    )
+}
+
+pub fn hidden_pair_blk(
+    puzzle: &(impl Grid + TrackingCandidates),
+) -> Option<((usize, usize), (usize, usize), i8, i8)> {
+    hidden_pair(
+        puzzle,
+        |p, b, num| p.grid_cnt_for_candidate_in_blk(b, num),
+        block_idx_2_coord,
+    )
+}
