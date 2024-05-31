@@ -2,7 +2,6 @@ use super::utils::{block_idx_2_coord, coord_2_block};
 
 pub trait TrackingCandidates {
     fn is_candidate_of(&self, r: usize, c: usize, num: i8) -> bool;
-    fn get_candidates_of(&mut self, r: usize, c: usize) -> &mut [bool; 10];
 
     fn candidate_cnt_for_grid_in_row(&self, r: usize, c: usize) -> i8;
     fn candidate_cnt_for_grid_in_col(&self, c: usize, r: usize) -> i8;
@@ -37,9 +36,6 @@ pub struct SudokuPuzzle {
 impl TrackingCandidates for SudokuPuzzle {
     fn is_candidate_of(&self, r: usize, c: usize, num: i8) -> bool {
         self.candidates[r][c][num as usize]
-    }
-    fn get_candidates_of(&mut self, r: usize, c: usize) -> &mut [bool; 10] {
-        &mut self.candidates[r][c]
     }
 
     fn candidate_cnt_for_grid_in_row(&self, r: usize, c: usize) -> i8 {
