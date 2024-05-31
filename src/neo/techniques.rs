@@ -139,3 +139,56 @@ pub fn hidden_pair_blk(
         block_idx_2_coord,
     )
 }
+
+fn naked_pair<T, F>(
+    puzzle: &T,
+    coord_transform: F,
+) -> Option<((usize, usize), (usize, usize), i8, i8)>
+where
+    T: Grid + TrackingCandidates,
+    F: Fn(usize, usize) -> (usize, usize),
+{
+    for i in 0..9 {
+        let js: Vec<usize> = (0..9)
+            .filter(|j| {
+                let (r, c) = coord_transform(i, *j);
+                puzzle.is_grid_empty(r, c) && puzzle.candidate_cnt_for_grid(r, c) == 2
+            })
+            .collect();
+        for i1 in 0..js.len() {
+            for i2 in 0..i1 {
+                let j1 = js[i1];
+                let j2 = js[i2];
+                let (r1, c1) = coord_transform(i, j1);
+                let (r2, c2) = coord_transform(i, j2);
+                if (1..=9).all(|num| {
+                    puzzle.is_candidate_of(r1, c1, num) == puzzle.is_candidate_of(r2, c2, num)
+                }) {
+                    let mut num_iter = (1..=9).filter(|num| puzzle.is_candidate_of(r1, c1, *num));
+                    let num1 = num_iter.next().unwrap();
+                    let num2 = num_iter.next().unwrap();
+                    return Some(((r1, c1), (r2, c2), num1, num2));
+                }
+            }
+        }
+    }
+    None
+}
+
+pub fn naked_pair_row(
+    puzzle: &(impl Grid + TrackingCandidates),
+) -> Option<((usize, usize), (usize, usize), i8, i8)> {
+    naked_pair(puzzle, |r, c| (r, c))
+}
+
+pub fn naked_pair_col(
+    puzzle: &(impl Grid + TrackingCandidates),
+) -> Option<((usize, usize), (usize, usize), i8, i8)> {
+    naked_pair(puzzle, |c, r| (r, c))
+}
+
+pub fn naked_pair_blk(
+    puzzle: &(impl Grid + TrackingCandidates),
+) -> Option<((usize, usize), (usize, usize), i8, i8)> {
+    naked_pair(puzzle, block_idx_2_coord)
+}
