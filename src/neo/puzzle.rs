@@ -11,22 +11,27 @@ pub trait TrackingCandidates {
     fn is_candidate_of(&self, r: usize, c: usize, num: i8) -> bool;
 }
 
-pub trait TrackingCandidateCountForGrid {
-    fn candidate_cnt_for_grid(&self, r: usize, c: usize) -> i8;
-    fn candidate_cnt_for_grid_in_row(&self, r: usize, c: usize) -> i8;
-    fn candidate_cnt_for_grid_in_col(&self, c: usize, r: usize) -> i8;
-    fn candidate_cnt_for_grid_in_blk(&self, b: usize, bidx: usize) -> i8;
+pub trait TrackingCandidateCountOfGrid {
+    fn candidate_cnt_of_grid(&self, r: usize, c: usize) -> i8;
+    fn candidate_cnt_of_grid_in_row(&self, r: usize, c: usize) -> i8;
+    fn candidate_cnt_of_grid_in_col(&self, c: usize, r: usize) -> i8;
+    fn candidate_cnt_of_grid_in_blk(&self, b: usize, bidx: usize) -> i8;
 }
 
-pub trait TrackingGridCountForCandidate {
-    fn grid_cnt_for_candidate_in_row(&self, r: usize, num: i8) -> i8;
-    fn grid_cnt_for_candidate_in_col(&self, c: usize, num: i8) -> i8;
-    fn grid_cnt_for_candidate_in_blk(&self, b: usize, num: i8) -> i8;
+pub trait TrackingGridCountOfCandidate {
+    fn grid_cnt_of_candidate_in_row(&self, r: usize, num: i8) -> i8;
+    fn grid_cnt_of_candidate_in_col(&self, c: usize, num: i8) -> i8;
+    fn grid_cnt_of_candidate_in_blk(&self, b: usize, num: i8) -> i8;
 }
 
 pub trait Fillable {
     fn fill_grid(&mut self, r: usize, c: usize, num: i8);
     fn unfill_grid(&mut self, r: usize, c: usize);
+}
+
+pub trait CandidatesSettable {
+    fn remove_candidate_of_grid(&mut self, r: usize, c: usize, to_remove: i8);
+    fn add_candidate_of_grid(&mut self, r: usize, c: usize, to_add: i8);
 }
 
 pub struct SudokuPuzzleSimple {
@@ -115,30 +120,30 @@ impl TrackingCandidates for SudokuPuzzleFull {
     }
 }
 
-impl TrackingCandidateCountForGrid for SudokuPuzzleFull {
-    fn candidate_cnt_for_grid(&self, r: usize, c: usize) -> i8 {
+impl TrackingCandidateCountOfGrid for SudokuPuzzleFull {
+    fn candidate_cnt_of_grid(&self, r: usize, c: usize) -> i8 {
         self.candidate_cnt[r][c]
     }
-    fn candidate_cnt_for_grid_in_row(&self, r: usize, c: usize) -> i8 {
+    fn candidate_cnt_of_grid_in_row(&self, r: usize, c: usize) -> i8 {
         self.candidate_cnt[r][c]
     }
-    fn candidate_cnt_for_grid_in_col(&self, c: usize, r: usize) -> i8 {
+    fn candidate_cnt_of_grid_in_col(&self, c: usize, r: usize) -> i8 {
         self.candidate_cnt[r][c]
     }
-    fn candidate_cnt_for_grid_in_blk(&self, b: usize, bidx: usize) -> i8 {
+    fn candidate_cnt_of_grid_in_blk(&self, b: usize, bidx: usize) -> i8 {
         let (r, c) = block_idx_2_coord(b, bidx);
         self.candidate_cnt[r][c]
     }
 }
 
-impl TrackingGridCountForCandidate for SudokuPuzzleFull {
-    fn grid_cnt_for_candidate_in_row(&self, r: usize, num: i8) -> i8 {
+impl TrackingGridCountOfCandidate for SudokuPuzzleFull {
+    fn grid_cnt_of_candidate_in_row(&self, r: usize, num: i8) -> i8 {
         self.grid_cnt_for_candidate_in_row[r][num as usize]
     }
-    fn grid_cnt_for_candidate_in_col(&self, c: usize, num: i8) -> i8 {
+    fn grid_cnt_of_candidate_in_col(&self, c: usize, num: i8) -> i8 {
         self.grid_cnt_for_candidate_in_col[c][num as usize]
     }
-    fn grid_cnt_for_candidate_in_blk(&self, b: usize, num: i8) -> i8 {
+    fn grid_cnt_of_candidate_in_blk(&self, b: usize, num: i8) -> i8 {
         self.grid_cnt_for_candidate_in_blk[b][num as usize]
     }
 }
@@ -222,6 +227,29 @@ impl Fillable for SudokuPuzzleFull {
             self.grid_cnt_for_candidate_in_col,
             self.grid_cnt_for_candidate_in_blk,
         ) = self.history.pop().unwrap();
+    }
+}
+
+impl CandidatesSettable for SudokuPuzzleFull {
+    fn remove_candidate_of_grid(&mut self, r: usize, c: usize, to_remove: i8) {
+        let to_remove = to_remove as usize;
+        let b = coord_2_block(r, c);
+        let is_candidate = self.candidates[r][c][to_remove];
+        self.candidate_cnt[r][c] -= is_candidate as i8;
+        self.grid_cnt_for_candidate_in_row[r][to_remove] -= is_candidate as i8;
+        self.grid_cnt_for_candidate_in_col[c][to_remove] -= is_candidate as i8;
+        self.grid_cnt_for_candidate_in_blk[b][to_remove] -= is_candidate as i8;
+        self.candidates[r][c][to_remove] = false;
+    }
+    fn add_candidate_of_grid(&mut self, r: usize, c: usize, to_add: i8) {
+        let to_add = to_add as usize;
+        let b = coord_2_block(r, c);
+        let is_candidate = self.candidates[r][c][to_add];
+        self.candidate_cnt[r][c] += !is_candidate as i8;
+        self.grid_cnt_for_candidate_in_row[r][to_add] += !is_candidate as i8;
+        self.grid_cnt_for_candidate_in_col[c][to_add] += !is_candidate as i8;
+        self.grid_cnt_for_candidate_in_blk[b][to_add] += !is_candidate as i8;
+        self.candidates[r][c][to_add] = true;
     }
 }
 

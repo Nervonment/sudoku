@@ -5,16 +5,20 @@ use crate::{
     neo::{
         judge::judge_sudoku,
         puzzle::{
-            SudokuPuzzleFull, TrackingCandidateCountForGrid, TrackingCandidates,
-            TrackingGridCountForCandidate,
+            SudokuPuzzleFull, TrackingCandidateCountOfGrid, TrackingCandidates,
+            TrackingGridCountOfCandidate,
         },
+        solver::TechniquesSolver,
         utils::{block_idx_2_coord, coord_2_block_idx},
     },
 };
 
 use super::{
-    puzzle::{Fillable, Grid, SudokuPuzzleSimple},
+    puzzle::{CandidatesSettable, Fillable, Grid, SudokuPuzzleSimple},
     solver::{Solver, StochasticSolver},
+    techniques::{
+        hidden_pair_row, hidden_single_blk, hidden_single_col, hidden_single_row, naked_single,
+    },
 };
 
 #[test]
@@ -26,7 +30,7 @@ fn sudoku_puzzle() {
         let mut moves = vec![];
         for _ in 0..10 {
             let (mut r, mut c) = (random::<usize>() % 9, random::<usize>() % 9);
-            while puzzle.grid_val(r, c) > 0 {
+            while !puzzle.is_grid_empty(r, c) {
                 (r, c) = (random::<usize>() % 9, random::<usize>() % 9);
             }
             let num = (random::<u8>() % 9 + 1) as i8;
@@ -65,9 +69,33 @@ fn sudoku_puzzle() {
                     for num in 1..=9 {
                         candidate_cnt += puzzle.is_candidate_of(r, c, num) as i8;
                     }
-                    assert_eq!(candidate_cnt, puzzle.candidate_cnt_for_grid_in_row(r, c));
-                    assert_eq!(candidate_cnt, puzzle.candidate_cnt_for_grid_in_col(c, r));
-                    assert_eq!(candidate_cnt, puzzle.candidate_cnt_for_grid_in_blk(b, bidx));
+                    assert_eq!(candidate_cnt, puzzle.candidate_cnt_of_grid_in_row(r, c));
+                    assert_eq!(candidate_cnt, puzzle.candidate_cnt_of_grid_in_col(c, r));
+                    assert_eq!(candidate_cnt, puzzle.candidate_cnt_of_grid_in_blk(b, bidx));
+                }
+            }
+        }
+
+        for _ in 0..10 {
+            let (mut r, mut c) = (random::<usize>() % 9, random::<usize>() % 9);
+            while !puzzle.is_grid_empty(r, c) {
+                (r, c) = (random::<usize>() % 9, random::<usize>() % 9);
+            }
+            let num = (random::<u8>() % 9 + 1) as i8;
+            puzzle.remove_candidate_of_grid(r, c, num);
+        }
+
+        for r in 0..9 {
+            for c in 0..9 {
+                let (b, bidx) = coord_2_block_idx(r, c);
+                if puzzle.is_grid_empty(r, c) {
+                    let mut candidate_cnt = 0;
+                    for num in 1..=9 {
+                        candidate_cnt += puzzle.is_candidate_of(r, c, num) as i8;
+                    }
+                    assert_eq!(candidate_cnt, puzzle.candidate_cnt_of_grid_in_row(r, c));
+                    assert_eq!(candidate_cnt, puzzle.candidate_cnt_of_grid_in_col(c, r));
+                    assert_eq!(candidate_cnt, puzzle.candidate_cnt_of_grid_in_blk(b, bidx));
                 }
             }
         }
@@ -80,7 +108,7 @@ fn sudoku_puzzle() {
                     grid_cnt +=
                         (puzzle.is_candidate_of(r, c, num) && puzzle.grid_val(r, c) == 0) as i8;
                 }
-                assert_eq!(grid_cnt, puzzle.grid_cnt_for_candidate_in_row(r, num));
+                assert_eq!(grid_cnt, puzzle.grid_cnt_of_candidate_in_row(r, num));
             }
             for c in 0..9 {
                 // grid_cnt 是第 c 列中候选数列表包含 num 的空格子数
@@ -89,7 +117,7 @@ fn sudoku_puzzle() {
                     grid_cnt +=
                         (puzzle.is_candidate_of(r, c, num) && puzzle.grid_val(r, c) == 0) as i8;
                 }
-                assert_eq!(grid_cnt, puzzle.grid_cnt_for_candidate_in_col(c, num));
+                assert_eq!(grid_cnt, puzzle.grid_cnt_of_candidate_in_col(c, num));
             }
             for b in 0..9 {
                 // grid_cnt 是第 b 宫中候选数列表包含 num 的空格子数
@@ -99,20 +127,71 @@ fn sudoku_puzzle() {
                     grid_cnt +=
                         (puzzle.is_candidate_of(r, c, num) && puzzle.grid_val(r, c) == 0) as i8;
                 }
-                assert_eq!(grid_cnt, puzzle.grid_cnt_for_candidate_in_blk(b, num));
+                assert_eq!(grid_cnt, puzzle.grid_cnt_of_candidate_in_blk(b, num));
             }
         }
     }
 }
 
 #[test]
-fn sudoku_solver() {
-    for _ in 0..50 {
+fn techniques_single() {
+    for _ in 0..100 {
         let puzzle = random_sudoku_puzzle_normal();
-        let mut solver = StochasticSolver::<SudokuPuzzleSimple>::new(puzzle);
-        assert!(solver.have_unique_solution());
-        let solution = solver.any_solution().unwrap();
-        let is_solution = judge_sudoku(&solution).1;
-        assert!(is_solution);
+        let mut puzzle = SudokuPuzzleFull::new(puzzle);
+        let res_hidden_single_row = hidden_single_row(&puzzle);
+        let res_hidden_single_col = hidden_single_col(&puzzle);
+        let res_hidden_single_blk = hidden_single_blk(&puzzle);
+        let res_naked_single = naked_single(&puzzle);
+        let singles = [
+            res_hidden_single_row,
+            res_hidden_single_col,
+            res_hidden_single_blk,
+            res_naked_single,
+        ];
+        for single in singles {
+            if single.is_some() {
+                let (r, c, num) = single.unwrap();
+                puzzle.fill_grid(r, c, num);
+                assert!(judge_sudoku(&puzzle.board()).0);
+                puzzle.unfill_grid(r, c);
+            }
+        }
+    }
+}
+
+#[test]
+fn techniques_pair() {
+    for _ in 0..10 {
+        let mut res_hidden_pair_row = None;
+        let mut puzzle = random_sudoku_puzzle_normal();
+        while res_hidden_pair_row.is_none() {
+            puzzle = random_sudoku_puzzle_normal();
+            let puzzle = SudokuPuzzleFull::new(puzzle);
+            res_hidden_pair_row = hidden_pair_row(&puzzle);
+        }
+        let mut puzzle = SudokuPuzzleFull::new(puzzle);
+        let ((r1, c1), _, (r2, c2), _, num1, num2) = res_hidden_pair_row.clone().unwrap();
+        let nums: Vec<i8> = (1..=9).filter(|n| *n != num1 && *n != num2).collect();
+        for num in &nums {
+            puzzle.remove_candidate_of_grid(r1, c1, *num);
+            puzzle.remove_candidate_of_grid(r2, c2, *num);
+        }
+        let res_hidden_pair_row_1 = hidden_pair_row(&puzzle);
+        assert_ne!(res_hidden_pair_row, res_hidden_pair_row_1);
+    }
+}
+
+#[test]
+fn sudoku_solver() {
+    for _ in 0..100 {
+        let puzzle = random_sudoku_puzzle_normal();
+        let mut solver1 = StochasticSolver::<SudokuPuzzleSimple>::new(puzzle);
+        let mut solver2 = TechniquesSolver::<SudokuPuzzleFull>::new(puzzle);
+        assert!(solver1.have_unique_solution());
+        assert!(solver2.have_unique_solution());
+        let solution1 = solver1.any_solution().unwrap();
+        let solution2 = solver2.any_solution().unwrap();
+        assert!(judge_sudoku(&solution1).1);
+        assert!(judge_sudoku(&solution2).1);
     }
 }

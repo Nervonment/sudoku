@@ -3,7 +3,7 @@ use sudoku::game::{
     generator::{
         random_sudoku_puzzle_easy, random_sudoku_puzzle_extraeasy, random_sudoku_puzzle_extrahard,
         random_sudoku_puzzle_hard, random_sudoku_puzzle_normal,
-    },
+    }, solver::{SudokuSolver, SudokuSolverH},
     // solver::{SudokuSolver, SudokuSolverH, SudokuSolverHP},
 };
 
@@ -19,13 +19,14 @@ pub fn benchmarks(c: &mut Criterion) {
     //     [0, 6, 0, 0, 0, 4, 0, 2, 0],
     //     [0, 0, 9, 0, 0, 0, 0, 0, 5],
     // ];
-    // // let puzzle = random_sudoku_puzzle(80);
-    // let mut solver = SudokuSolverH::new(puzzle);
-    // c.bench_function("SudokuSolverH", |b| {
-    //     b.iter(|| {
-    //         solver.get_solution();
-    //     })
-    // });
+    // let puzzle = random_sudoku_puzzle(80);
+    let puzzle = random_sudoku_puzzle_normal();
+    let mut solver = SudokuSolverH::new(puzzle);
+    c.bench_function("SudokuSolverH", |b| {
+        b.iter(|| {
+            solver.get_solution();
+        })
+    });
     // let mut solver_hp = SudokuSolverHP::new(puzzle);
     // c.bench_function("SudoluSolverHP", |b| {
     //     b.iter(|| {
