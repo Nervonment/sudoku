@@ -125,7 +125,6 @@ where
     puzzle_arr: [[i8; 9]; 9],
     puzzle: T,
     solution_cnt: u32,
-    depth: u32,
 }
 
 impl<T> TechniquesSolver<T>
@@ -138,7 +137,6 @@ where
         + TrackingGridCountOfCandidate,
 {
     fn init_search(&mut self) {
-        self.depth = 0;
         self.solution_cnt = 0;
         self.puzzle = T::new(self.puzzle_arr);
     }
@@ -172,7 +170,6 @@ where
             ));
         // 可以通过 hidden pair 删除一些候选数字
         if num1 > 0 {
-            self.depth += 1;
             for num in &rem1 {
                 self.puzzle.remove_candidate_of_grid(r1, c1, *num);
             }
@@ -237,7 +234,6 @@ where
             puzzle_arr: puzzle,
             puzzle: T::new(puzzle),
             solution_cnt: 0,
-            depth: 1,
         }
     }
 
