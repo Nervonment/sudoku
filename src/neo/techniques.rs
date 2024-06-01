@@ -2,7 +2,7 @@ use super::{
     puzzle::{
         Grid, TrackingCandidateCountOfGrid, TrackingCandidates, TrackingGridCountOfCandidate,
     },
-    utils::block_idx_2_coord,
+    utils::{block_idx_2_coord, coord_2_block},
 };
 
 fn hidden_single<T, F1, F2>(
@@ -265,4 +265,53 @@ pub fn naked_pair_blk(
     Vec<(usize, usize)>,
 )> {
     naked_pair(puzzle, block_idx_2_coord)
+}
+
+pub fn pointing(
+    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountOfCandidate),
+) -> Option<(usize, i8, Vec<(usize, usize)>)> {
+    for b in 0..9 {
+        for num in 1..=9 {
+            let cnt = puzzle.grid_cnt_of_candidate_in_blk(b, num);
+            if cnt < 1 || cnt > 3 {
+                continue;
+            }
+            let mut bidxs = (0..9).filter(|bidx| {
+                let (r, c) = block_idx_2_coord(b, *bidx);
+                puzzle.is_grid_empty(r, c) && puzzle.is_candidate_of(r, c, num)
+            });
+            let bidx0 = bidxs.next().unwrap();
+            // 在同一行
+            if bidxs.clone().all(|bidx| bidx / 3 == bidx0 / 3) {
+                let r = block_idx_2_coord(b, bidx0).0;
+                let removes: Vec<(usize, usize)> = (0..9)
+                    .filter(|c| {
+                        coord_2_block(r, *c) != b
+                            && puzzle.is_grid_empty(r, *c)
+                            && puzzle.is_candidate_of(r, *c, num)
+                    })
+                    .map(|c| (r, c))
+                    .collect();
+                if !removes.is_empty() {
+                    return Some((b, num, removes));
+                }
+            }
+            // 在同一列
+            else if bidxs.all(|bidx| bidx % 3 == bidx0 % 3) {
+                let c = block_idx_2_coord(b, bidx0).1;
+                let removes: Vec<(usize, usize)> = (0..9)
+                    .filter(|r| {
+                        coord_2_block(*r, c) != b
+                            && puzzle.is_grid_empty(*r, c)
+                            && puzzle.is_candidate_of(*r, c, num)
+                    })
+                    .map(|r| (r, c))
+                    .collect();
+                if !removes.is_empty() {
+                    return Some((b, num, removes));
+                }
+            }
+        }
+    }
+    None
 }
