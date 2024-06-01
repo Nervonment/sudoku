@@ -21,14 +21,12 @@ where
                 let j = (0..9)
                     .filter(|j: &usize| {
                         let (r, c) = coord_transform(i, *j);
-                        puzzle.is_candidate_of(r, c, num)
+                        puzzle.is_grid_empty(r, c) && puzzle.is_candidate_of(r, c, num)
                     })
                     .next()
                     .unwrap();
                 let (r, c) = coord_transform(i, j);
-                if puzzle.is_grid_empty(r, c) {
-                    return Some((r, c, num));
-                }
+                return Some((r, c, num));
             }
         }
     }

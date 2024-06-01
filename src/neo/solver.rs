@@ -19,6 +19,10 @@ pub trait Solver {
     fn have_unique_solution(&mut self) -> bool;
 }
 
+pub trait Grader {
+    fn difficulty(&self) -> i32;
+}
+
 fn next_blank(mut row: usize, mut col: usize, puzzle: &impl Grid) -> Option<(usize, usize)> {
     while row < 9 && !puzzle.is_grid_empty(row, col) {
         if col == 8 {
@@ -125,6 +129,7 @@ where
     puzzle_arr: [[i8; 9]; 9],
     puzzle: T,
     solution_cnt: u32,
+    invoke_cnt: i32,
 }
 
 impl<T> TechniquesSolver<T>
@@ -138,10 +143,12 @@ where
 {
     fn init_search(&mut self) {
         self.solution_cnt = 0;
+        self.invoke_cnt = 0;
         self.puzzle = T::new(self.puzzle_arr);
     }
 
     fn search(&mut self, solution_cnt_needed: u32) -> bool {
+        self.invoke_cnt += 1;
         if self.puzzle.board().iter().flatten().all(|v| *v > 0) {
             self.solution_cnt += 1;
             return solution_cnt_needed <= self.solution_cnt;
@@ -258,6 +265,7 @@ where
             puzzle_arr: puzzle,
             puzzle: T::new(puzzle),
             solution_cnt: 0,
+            invoke_cnt: 0,
         }
     }
 
@@ -279,5 +287,19 @@ where
         self.init_search();
         self.search(2);
         self.solution_cnt == 1
+    }
+}
+
+impl<T> Grader for TechniquesSolver<T>
+where
+    T: Grid
+        + Fillable
+        + CandidatesSettable
+        + TrackingCandidates
+        + TrackingCandidateCountOfGrid
+        + TrackingGridCountOfCandidate,
+{
+    fn difficulty(&self) -> i32 {
+        self.invoke_cnt
     }
 }
