@@ -169,7 +169,14 @@ pub fn hidden_pair_blk(
 fn naked_pair<T, F>(
     puzzle: &T,
     coord_transform: F,
-) -> Option<((usize, usize), (usize, usize), i8, i8)>
+) -> Option<(
+    (usize, usize),
+    (usize, usize),
+    i8,
+    Vec<(usize, usize)>,
+    i8,
+    Vec<(usize, usize)>,
+)>
 where
     T: Grid + TrackingCandidates + TrackingCandidateCountOfGrid,
     F: Fn(usize, usize) -> (usize, usize),
@@ -193,7 +200,29 @@ where
                     let mut num_iter = (1..=9).filter(|num| puzzle.is_candidate_of(r1, c1, *num));
                     let num1 = num_iter.next().unwrap();
                     let num2 = num_iter.next().unwrap();
-                    return Some(((r1, c1), (r2, c2), num1, num2));
+                    let removes_1: Vec<(usize, usize)> = (0..9)
+                        .filter(|j| {
+                            let (r, c) = coord_transform(i, *j);
+                            *j != j1
+                                && *j != j2
+                                && puzzle.is_grid_empty(r, c)
+                                && puzzle.is_candidate_of(r, c, num1)
+                        })
+                        .map(|j| coord_transform(i, j))
+                        .collect();
+                    let removes_2: Vec<(usize, usize)> = (0..9)
+                        .filter(|j| {
+                            let (r, c) = coord_transform(i, *j);
+                            *j != j1
+                                && *j != j2
+                                && puzzle.is_grid_empty(r, c)
+                                && puzzle.is_candidate_of(r, c, num2)
+                        })
+                        .map(|j| coord_transform(i, j))
+                        .collect();
+                    if !removes_1.is_empty() || !removes_2.is_empty() {
+                        return Some(((r1, c1), (r2, c2), num1, removes_1, num2, removes_2));
+                    }
                 }
             }
         }
@@ -203,18 +232,39 @@ where
 
 pub fn naked_pair_row(
     puzzle: &(impl Grid + TrackingCandidates + TrackingCandidateCountOfGrid),
-) -> Option<((usize, usize), (usize, usize), i8, i8)> {
+) -> Option<(
+    (usize, usize),
+    (usize, usize),
+    i8,
+    Vec<(usize, usize)>,
+    i8,
+    Vec<(usize, usize)>,
+)> {
     naked_pair(puzzle, |r, c| (r, c))
 }
 
 pub fn naked_pair_col(
     puzzle: &(impl Grid + TrackingCandidates + TrackingCandidateCountOfGrid),
-) -> Option<((usize, usize), (usize, usize), i8, i8)> {
+) -> Option<(
+    (usize, usize),
+    (usize, usize),
+    i8,
+    Vec<(usize, usize)>,
+    i8,
+    Vec<(usize, usize)>,
+)> {
     naked_pair(puzzle, |c, r| (r, c))
 }
 
 pub fn naked_pair_blk(
     puzzle: &(impl Grid + TrackingCandidates + TrackingCandidateCountOfGrid),
-) -> Option<((usize, usize), (usize, usize), i8, i8)> {
+) -> Option<(
+    (usize, usize),
+    (usize, usize),
+    i8,
+    Vec<(usize, usize)>,
+    i8,
+    Vec<(usize, usize)>,
+)> {
     naked_pair(puzzle, block_idx_2_coord)
 }

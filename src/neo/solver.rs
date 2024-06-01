@@ -7,7 +7,7 @@ use super::{
     },
     techniques::{
         hidden_pair_blk, hidden_pair_col, hidden_pair_row, hidden_single_blk, hidden_single_col,
-        hidden_single_row, naked_single,
+        hidden_single_row, naked_pair_blk, naked_pair_col, naked_pair_row, naked_single,
     },
 };
 use rand::prelude::*;
@@ -153,7 +153,7 @@ where
                     .unwrap_or(naked_single(&self.puzzle).unwrap_or((0, 0, 0))),
             ),
         );
-        // 可以通过 hidden single 或 naked single 确定下一步填的数字
+        // 如果可以通过 hidden single 或 naked single 确定下一步填的数字
         if step.2 > 0 {
             let (r, c, num) = step;
             self.puzzle.fill_grid(r, c, num);
@@ -168,7 +168,7 @@ where
             hidden_pair_row(&self.puzzle).unwrap_or(hidden_pair_col(&self.puzzle).unwrap_or(
                 hidden_pair_blk(&self.puzzle).unwrap_or(((0, 0), vec![], (0, 0), vec![], 0, 0)),
             ));
-        // 可以通过 hidden pair 删除一些候选数字
+        // 如果可以通过 hidden pair 删除一些候选数字
         if num1 > 0 {
             for num in &rem1 {
                 self.puzzle.remove_candidate_of_grid(r1, c1, *num);
@@ -184,6 +184,30 @@ where
             }
             for num in &rem2 {
                 self.puzzle.add_candidate_of_grid(r2, c2, *num);
+            }
+            return false;
+        }
+
+        let ((_, _), (_, _), num1, rem1, num2, rem2) =
+            naked_pair_row(&self.puzzle).unwrap_or(naked_pair_col(&self.puzzle).unwrap_or(
+                naked_pair_blk(&self.puzzle).unwrap_or(((0, 0), (0, 0), 0, vec![], 0, vec![])),
+            ));
+        // 如果可以通过 naked pair 删除一些候选数字
+        if num1 > 0 {
+            for (r, c) in &rem1 {
+                self.puzzle.remove_candidate_of_grid(*r, *c, num1);
+            }
+            for (r, c) in &rem2 {
+                self.puzzle.remove_candidate_of_grid(*r, *c, num2);
+            }
+            if self.search(solution_cnt_needed) {
+                return true;
+            }
+            for (r, c) in &rem1 {
+                self.puzzle.add_candidate_of_grid(*r, *c, num1);
+            }
+            for (r, c) in &rem2 {
+                self.puzzle.add_candidate_of_grid(*r, *c, num2);
             }
             return false;
         }
