@@ -7,7 +7,7 @@ use super::{
     },
     techniques::{
         hidden_pair_blk, hidden_pair_col, hidden_pair_row, hidden_single_blk, hidden_single_col,
-        hidden_single_row, naked_pair_blk, naked_pair_col, naked_pair_row, naked_single,
+        hidden_single_row, naked_pair_blk, naked_pair_col, naked_pair_row, naked_single, pointing,
     },
 };
 use rand::prelude::*;
@@ -215,6 +215,22 @@ where
             }
             for (r, c) in &rem2 {
                 self.puzzle.add_candidate_of_grid(*r, *c, num2);
+            }
+            return false;
+        }
+
+        let res_pointing = pointing(&self.puzzle);
+        // 如果可以通过 pointing 删除一些候选数字
+        if res_pointing.is_some() {
+            let (_, num, rems) = res_pointing.unwrap();
+            for (r, c) in &rems {
+                self.puzzle.remove_candidate_of_grid(*r, *c, num);
+            }
+            if self.search(solution_cnt_needed) {
+                return true;
+            }
+            for (r, c) in &rems {
+                self.puzzle.add_candidate_of_grid(*r, *c, num);
             }
             return false;
         }
