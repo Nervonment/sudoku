@@ -1,20 +1,27 @@
 use rand::random;
 
 use crate::{
-    game::generator::random_sudoku_puzzle_easy,
+    game::generator::{random_sudoku_puzzle_easy, random_sudoku_puzzle_normal},
     neo::{
-        puzzle::{SudokuPuzzle, TrackingCandidates},
+        judge::judge_sudoku,
+        puzzle::{
+            SudokuPuzzleFull, TrackingCandidateCountForGrid, TrackingCandidates,
+            TrackingGridCountForCandidate,
+        },
         utils::{block_idx_2_coord, coord_2_block_idx},
     },
 };
 
-use super::puzzle::{Fillable, Grid};
+use super::{
+    puzzle::{Fillable, Grid, SudokuPuzzleSimple},
+    solver::{Solver, StochasticSolver},
+};
 
 #[test]
 fn sudoku_puzzle() {
     for _ in 0..100 {
         let puzzle = random_sudoku_puzzle_easy();
-        let mut puzzle = SudokuPuzzle::new(puzzle);
+        let mut puzzle = SudokuPuzzleFull::new(puzzle);
 
         let mut moves = vec![];
         for _ in 0..10 {
@@ -26,8 +33,8 @@ fn sudoku_puzzle() {
             moves.push((r, c));
             puzzle.fill_grid(r, c, num);
         }
-        while !moves.is_empty(){
-            let (r,c) = moves.pop().unwrap();
+        while !moves.is_empty() {
+            let (r, c) = moves.pop().unwrap();
             puzzle.unfill_grid(r, c);
         }
 
@@ -95,5 +102,17 @@ fn sudoku_puzzle() {
                 assert_eq!(grid_cnt, puzzle.grid_cnt_for_candidate_in_blk(b, num));
             }
         }
+    }
+}
+
+#[test]
+fn sudoku_solver() {
+    for _ in 0..50 {
+        let puzzle = random_sudoku_puzzle_normal();
+        let mut solver = StochasticSolver::<SudokuPuzzleSimple>::new(puzzle);
+        assert!(solver.have_unique_solution());
+        let solution = solver.any_solution().unwrap();
+        let is_solution = judge_sudoku(&solution).1;
+        assert!(is_solution);
     }
 }

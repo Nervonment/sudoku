@@ -1,5 +1,7 @@
 use super::{
-    puzzle::{Grid, TrackingCandidates},
+    puzzle::{
+        Grid, TrackingCandidateCountForGrid, TrackingCandidates, TrackingGridCountForCandidate,
+    },
     utils::block_idx_2_coord,
 };
 
@@ -33,7 +35,9 @@ where
     None
 }
 
-pub fn hidden_single_row(puzzle: &(impl Grid + TrackingCandidates)) -> Option<(usize, usize, i8)> {
+pub fn hidden_single_row(
+    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountForCandidate),
+) -> Option<(usize, usize, i8)> {
     hidden_single(
         puzzle,
         |p, r, num| p.grid_cnt_for_candidate_in_row(r, num),
@@ -41,7 +45,9 @@ pub fn hidden_single_row(puzzle: &(impl Grid + TrackingCandidates)) -> Option<(u
     )
 }
 
-pub fn hidden_single_col(puzzle: &(impl Grid + TrackingCandidates)) -> Option<(usize, usize, i8)> {
+pub fn hidden_single_col(
+    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountForCandidate),
+) -> Option<(usize, usize, i8)> {
     hidden_single(
         puzzle,
         |p, c, num| p.grid_cnt_for_candidate_in_col(c, num),
@@ -49,7 +55,9 @@ pub fn hidden_single_col(puzzle: &(impl Grid + TrackingCandidates)) -> Option<(u
     )
 }
 
-pub fn hidden_single_blk(puzzle: &(impl Grid + TrackingCandidates)) -> Option<(usize, usize, i8)> {
+pub fn hidden_single_blk(
+    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountForCandidate),
+) -> Option<(usize, usize, i8)> {
     hidden_single(
         puzzle,
         |p, b, num| p.grid_cnt_for_candidate_in_blk(b, num),
@@ -57,7 +65,9 @@ pub fn hidden_single_blk(puzzle: &(impl Grid + TrackingCandidates)) -> Option<(u
     )
 }
 
-pub fn naked_single(puzzle: &(impl Grid + TrackingCandidates)) -> Option<(usize, usize, i8)> {
+pub fn naked_single(
+    puzzle: &(impl Grid + TrackingCandidates + TrackingCandidateCountForGrid),
+) -> Option<(usize, usize, i8)> {
     for r in 0..9 {
         for c in 0..9 {
             if puzzle.is_grid_empty(r, c) && puzzle.candidate_cnt_for_grid(r, c) == 1 {
@@ -111,7 +121,7 @@ where
 }
 
 pub fn hidden_pair_row(
-    puzzle: &(impl Grid + TrackingCandidates),
+    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountForCandidate),
 ) -> Option<((usize, usize), (usize, usize), i8, i8)> {
     hidden_pair(
         puzzle,
@@ -121,7 +131,7 @@ pub fn hidden_pair_row(
 }
 
 pub fn hidden_pair_col(
-    puzzle: &(impl Grid + TrackingCandidates),
+    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountForCandidate),
 ) -> Option<((usize, usize), (usize, usize), i8, i8)> {
     hidden_pair(
         puzzle,
@@ -131,7 +141,7 @@ pub fn hidden_pair_col(
 }
 
 pub fn hidden_pair_blk(
-    puzzle: &(impl Grid + TrackingCandidates),
+    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountForCandidate),
 ) -> Option<((usize, usize), (usize, usize), i8, i8)> {
     hidden_pair(
         puzzle,
@@ -145,7 +155,7 @@ fn naked_pair<T, F>(
     coord_transform: F,
 ) -> Option<((usize, usize), (usize, usize), i8, i8)>
 where
-    T: Grid + TrackingCandidates,
+    T: Grid + TrackingCandidates + TrackingCandidateCountForGrid,
     F: Fn(usize, usize) -> (usize, usize),
 {
     for i in 0..9 {
@@ -176,19 +186,19 @@ where
 }
 
 pub fn naked_pair_row(
-    puzzle: &(impl Grid + TrackingCandidates),
+    puzzle: &(impl Grid + TrackingCandidates + TrackingCandidateCountForGrid),
 ) -> Option<((usize, usize), (usize, usize), i8, i8)> {
     naked_pair(puzzle, |r, c| (r, c))
 }
 
 pub fn naked_pair_col(
-    puzzle: &(impl Grid + TrackingCandidates),
+    puzzle: &(impl Grid + TrackingCandidates + TrackingCandidateCountForGrid),
 ) -> Option<((usize, usize), (usize, usize), i8, i8)> {
     naked_pair(puzzle, |c, r| (r, c))
 }
 
 pub fn naked_pair_blk(
-    puzzle: &(impl Grid + TrackingCandidates),
+    puzzle: &(impl Grid + TrackingCandidates + TrackingCandidateCountForGrid),
 ) -> Option<((usize, usize), (usize, usize), i8, i8)> {
     naked_pair(puzzle, block_idx_2_coord)
 }

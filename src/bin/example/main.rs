@@ -4,7 +4,7 @@ use crossterm::{terminal::EnterAlternateScreen, ExecutableCommand};
 use sudoku::{
     game::generator::random_sudoku_puzzle_normal,
     neo::{
-        puzzle::SudokuPuzzle,
+        puzzle::{Grid, SudokuPuzzleFull},
         techniques::{
             hidden_pair_blk, hidden_pair_col, hidden_pair_row, hidden_single_blk,
             hidden_single_col, hidden_single_row, naked_pair_blk, naked_pair_col, naked_pair_row,
@@ -27,7 +27,7 @@ fn main() -> io::Result<()> {
     //     [0, 5, 0, 6, 2, 0, 0, 0, 0],
     //     [7, 0, 2, 0, 5, 0, 0, 0, 0],
     // ];
-    let puzzle = SudokuPuzzle::new(board);
+    let puzzle = SudokuPuzzleFull::new(board);
     stdout().execute(EnterAlternateScreen)?;
     draw_grid()?;
     draw_numbers(&board, &board, &[[true; 9]; 9])?;

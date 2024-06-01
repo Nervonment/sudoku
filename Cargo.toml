@@ -13,6 +13,10 @@ rand = "0.8.5"
 name = "benchmark"
 harness = false
 
+[[bench]]
+name = "neo_solvers"
+harness = false
+
 [[bin]]
 name = "example"
 test = false
