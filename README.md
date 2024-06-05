@@ -1,22 +1,5 @@
 # sudoku
 
-命令行数独。
+A library for sudoku puzzle generating & solving. 
 
-## Features
-- Random sudoku puzzles with different levels.
-- Undo and redo.
-- Hint.
-- Only support Chinese currently.
-- : )
-
-## Run & Build
-To run the game:
-```
-cd sudoku
-cargo run
-```
-
-To build the game:
-```
-cargo build --release
-```
+Run `cargo run` to see the example. 

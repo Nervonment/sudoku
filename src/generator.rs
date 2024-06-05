@@ -14,7 +14,6 @@ where
     loop {
         // 生成随机终局
         let mut puzzle = T1::new([[0; 9]; 9]).any_solution().unwrap();
-        // println!("生成了新的终局，正在尝试在此基础上挖空生成题目...");
 
         let mut dug = 0; // 已经挖掉的空格数
         let mut trace = vec![]; // 挖空历史记录
@@ -77,10 +76,6 @@ where
                     dug -= trace_back_step;
                     failed_try = 0;
                     trace_back_cnt += 1;
-                    // println!(
-                    // "挖空失败超过{}次，退回{}步重新尝试挖空",
-                    // failed_try_threshold, trace_back_step
-                    // );
                 }
             }
             dug += step;
@@ -88,6 +83,5 @@ where
         if dug >= min_blank_cnt && (difficulty >= min_difficulty && difficulty <= max_difficulty) {
             return puzzle;
         }
-        // println!("这个终局可能不太行，正在换一个终局重新生成...");
     }
 }

@@ -2,19 +2,14 @@
 name = "sudoku"
 version = "0.1.0"
 edition = "2021"
-default-run = "sudoku"
+default-run = "example"
 
 [dependencies]
 criterion = "0.5.1"
-crossterm = "0.27.0"
 rand = "0.8.5"
 
 [[bench]]
-name = "benchmark"
-harness = false
-
-[[bench]]
-name = "neo_solvers"
+name = "solver_benches"
 harness = false
 
 [[bin]]

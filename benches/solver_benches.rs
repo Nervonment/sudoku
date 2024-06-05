@@ -1,14 +1,15 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use sudoku::{
-    game::generator::random_sudoku_puzzle_normal,
-    neo::{
-        puzzle::{SudokuPuzzleFull, SudokuPuzzleSimple},
-        solver::{Solver, StochasticSolver, TechniquesSolver},
-    },
+    generator::random_sudoku_puzzle,
+    puzzle::{SudokuPuzzleFull, SudokuPuzzleSimple},
+    solver::{Solver, StochasticSolver, TechniquesSolver},
 };
 
 fn benchmarks(c: &mut Criterion) {
-    let puzzle = random_sudoku_puzzle_normal();
+    let puzzle = random_sudoku_puzzle::<
+        StochasticSolver<SudokuPuzzleSimple>,
+        TechniquesSolver<SudokuPuzzleFull>,
+    >(45, 100, 10000);
     let mut solver = StochasticSolver::<SudokuPuzzleSimple>::new(puzzle);
     c.bench_function("StochasticSolver", |b| {
         b.iter(|| {
