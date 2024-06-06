@@ -34,7 +34,7 @@ where
         nums.shuffle(&mut rand::thread_rng());
         for num in nums {
             if self.state.is_candidate_of(r, c, num) {
-                self.state.fill_grid(r, c, num);
+                self.state.fill_cell(r, c, num);
 
                 if self.search(r, c, solution_cnt_needed)
                     && solution_cnt_needed <= self.solution_cnt
@@ -42,7 +42,7 @@ where
                     return true;
                 }
 
-                self.state.unfill_grid(r, c);
+                self.state.unfill_cell(r, c);
             }
         }
 
@@ -70,7 +70,7 @@ where
     fn any_solution(&mut self) -> Option<[[i8; 9]; 9]> {
         self.init_search();
         if self.search(0, 0, 1) {
-            return Some(self.state.board());
+            return Some(self.state.grid());
         }
         None
     }

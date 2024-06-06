@@ -11,7 +11,7 @@ pub trait Grader<T: PartialOrd> {
 }
 
 fn next_blank(mut row: usize, mut col: usize, state: &impl State) -> Option<(usize, usize)> {
-    while row < 9 && !state.is_grid_empty(row, col) {
+    while row < 9 && !state.is_cell_empty(row, col) {
         if col == 8 {
             col = 0;
             row += 1;

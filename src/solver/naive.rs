@@ -1,7 +1,7 @@
 use crate::{
     state::{
-        CandidatesSettable, Fillable, State, TrackingCandidateCountOfGrid, TrackingCandidates,
-        TrackingGridCountOfCandidate,
+        CandidatesSettable, Fillable, State, TrackingCandidateCountOfCell, TrackingCandidates,
+        TrackingCellCountOfCandidate,
     },
     techniques::{hidden_single_blk, hidden_single_col, hidden_single_row},
 };
@@ -14,8 +14,8 @@ where
         + Fillable
         + CandidatesSettable
         + TrackingCandidates
-        + TrackingCandidateCountOfGrid
-        + TrackingGridCountOfCandidate,
+        + TrackingCandidateCountOfCell
+        + TrackingCellCountOfCandidate,
 {
     puzzle: [[i8; 9]; 9],
     state: T,
@@ -29,8 +29,8 @@ where
         + Fillable
         + CandidatesSettable
         + TrackingCandidates
-        + TrackingCandidateCountOfGrid
-        + TrackingGridCountOfCandidate,
+        + TrackingCandidateCountOfCell
+        + TrackingCellCountOfCandidate,
 {
     fn init_search(&mut self) {
         self.solution_cnt = 0;
@@ -40,7 +40,7 @@ where
 
     fn search(&mut self, solution_cnt_needed: u32) -> bool {
         self.invoke_cnt += 1;
-        if self.state.board().iter().flatten().all(|v| *v > 0) {
+        if self.state.grid().iter().flatten().all(|v| *v > 0) {
             self.solution_cnt += 1;
             return solution_cnt_needed <= self.solution_cnt;
         }
@@ -52,11 +52,11 @@ where
         // 如果可以通过 hidden single 确定下一步填的数字
         if step.2 > 0 {
             let (r, c, num) = step;
-            self.state.fill_grid(r, c, num);
+            self.state.fill_cell(r, c, num);
             if self.search(solution_cnt_needed) {
                 return true;
             }
-            self.state.unfill_grid(r, c);
+            self.state.unfill_cell(r, c);
             return false;
         }
 
@@ -70,8 +70,8 @@ where
         + Fillable
         + CandidatesSettable
         + TrackingCandidates
-        + TrackingCandidateCountOfGrid
-        + TrackingGridCountOfCandidate,
+        + TrackingCandidateCountOfCell
+        + TrackingCellCountOfCandidate,
 {
     fn from(puzzle: [[i8; 9]; 9]) -> Self {
         Self {
@@ -89,13 +89,13 @@ where
         + Fillable
         + CandidatesSettable
         + TrackingCandidates
-        + TrackingCandidateCountOfGrid
-        + TrackingGridCountOfCandidate,
+        + TrackingCandidateCountOfCell
+        + TrackingCellCountOfCandidate,
 {
     fn any_solution(&mut self) -> Option<[[i8; 9]; 9]> {
         self.init_search();
         if self.search(1) {
-            return Some(self.state.board());
+            return Some(self.state.grid());
         }
         None
     }
@@ -119,8 +119,8 @@ where
         + Fillable
         + CandidatesSettable
         + TrackingCandidates
-        + TrackingCandidateCountOfGrid
-        + TrackingGridCountOfCandidate,
+        + TrackingCandidateCountOfCell
+        + TrackingCellCountOfCandidate,
 {
     fn difficulty(&self) -> i32 {
         self.invoke_cnt
