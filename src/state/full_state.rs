@@ -1,104 +1,11 @@
-use super::utils::{block_idx_2_coord, coord_2_block};
+use crate::utils::{block_idx_2_coord, coord_2_block};
 
-pub trait Grid {
-    fn new(puzzle: [[i8; 9]; 9]) -> Self;
-    fn grid_val(&self, r: usize, c: usize) -> i8;
-    fn is_grid_empty(&self, r: usize, c: usize) -> bool;
-    fn board(&self) -> [[i8; 9]; 9];
-}
+use super::{
+    CandidatesSettable, Fillable, State, TrackingCandidateCountOfGrid, TrackingCandidates,
+    TrackingGridCountOfCandidate,
+};
 
-pub trait TrackingCandidates {
-    fn is_candidate_of(&self, r: usize, c: usize, num: i8) -> bool;
-}
-
-pub trait TrackingCandidateCountOfGrid {
-    fn candidate_cnt_of_grid(&self, r: usize, c: usize) -> i8;
-    fn candidate_cnt_of_grid_in_row(&self, r: usize, c: usize) -> i8;
-    fn candidate_cnt_of_grid_in_col(&self, c: usize, r: usize) -> i8;
-    fn candidate_cnt_of_grid_in_blk(&self, b: usize, bidx: usize) -> i8;
-}
-
-pub trait TrackingGridCountOfCandidate {
-    fn grid_cnt_of_candidate_in_row(&self, r: usize, num: i8) -> i8;
-    fn grid_cnt_of_candidate_in_col(&self, c: usize, num: i8) -> i8;
-    fn grid_cnt_of_candidate_in_blk(&self, b: usize, num: i8) -> i8;
-}
-
-pub trait Fillable {
-    fn fill_grid(&mut self, r: usize, c: usize, num: i8);
-    fn unfill_grid(&mut self, r: usize, c: usize);
-}
-
-pub trait CandidatesSettable {
-    fn remove_candidate_of_grid(&mut self, r: usize, c: usize, to_remove: i8);
-    fn add_candidate_of_grid(&mut self, r: usize, c: usize, to_add: i8);
-}
-
-pub struct SudokuPuzzleSimple {
-    board: [[i8; 9]; 9],    // 棋盘
-    row: [[bool; 10]; 9],   // row[r][num] = 第r行是否存在数num
-    col: [[bool; 10]; 9],   // 同理
-    block: [[bool; 10]; 9], // 同理
-}
-
-impl Grid for SudokuPuzzleSimple {
-    fn new(puzzle: [[i8; 9]; 9]) -> Self {
-        let mut res = Self {
-            board: puzzle,
-            row: [[false; 10]; 9],
-            col: [[false; 10]; 9],
-            block: [[false; 10]; 9],
-        };
-        for r in 0..9 {
-            for c in 0..9 {
-                res.row[r][res.board[r][c] as usize] = true;
-                res.col[c][res.board[r][c] as usize] = true;
-                res.block[coord_2_block(r, c)][res.board[r][c] as usize] = true;
-            }
-        }
-        res
-    }
-
-    fn grid_val(&self, r: usize, c: usize) -> i8 {
-        self.board[r][c]
-    }
-
-    fn is_grid_empty(&self, r: usize, c: usize) -> bool {
-        self.board[r][c] == 0
-    }
-
-    fn board(&self) -> [[i8; 9]; 9] {
-        self.board
-    }
-}
-
-impl TrackingCandidates for SudokuPuzzleSimple {
-    fn is_candidate_of(&self, r: usize, c: usize, num: i8) -> bool {
-        let b = coord_2_block(r, c);
-        !self.row[r][num as usize] && !self.col[c][num as usize] && !self.block[b][num as usize]
-    }
-}
-
-impl Fillable for SudokuPuzzleSimple {
-    fn fill_grid(&mut self, r: usize, c: usize, num: i8) {
-        let b = coord_2_block(r, c);
-        self.board[r][c] = num;
-        self.row[r][num as usize] = true;
-        self.col[c][num as usize] = true;
-        self.block[b][num as usize] = true;
-    }
-
-    fn unfill_grid(&mut self, r: usize, c: usize) {
-        let b = coord_2_block(r, c);
-        let num = self.board[r][c];
-        self.board[r][c] = 0;
-        self.row[r][num as usize] = false;
-        self.col[c][num as usize] = false;
-        self.block[b][num as usize] = false;
-    }
-}
-
-pub struct SudokuPuzzleFull {
+pub struct FullState {
     board: [[i8; 9]; 9],
     candidates: [[[bool; 10]; 9]; 9],
     candidate_cnt: [[i8; 9]; 9],
@@ -114,13 +21,49 @@ pub struct SudokuPuzzleFull {
     )>,
 }
 
-impl TrackingCandidates for SudokuPuzzleFull {
+impl From<[[i8; 9]; 9]> for FullState {
+    fn from(puzzle: [[i8; 9]; 9]) -> Self {
+        let mut res = Self {
+            board: [[0; 9]; 9],
+            candidates: [[[true; 10]; 9]; 9],
+            candidate_cnt: [[9; 9]; 9],
+            grid_cnt_for_candidate_in_row: [[9; 10]; 9],
+            grid_cnt_for_candidate_in_col: [[9; 10]; 9],
+            grid_cnt_for_candidate_in_blk: [[9; 10]; 9],
+            history: vec![],
+        };
+        for r in 0..9 {
+            for c in 0..9 {
+                if puzzle[r][c] > 0 {
+                    res.fill_grid(r, c, puzzle[r][c]);
+                }
+            }
+        }
+        res
+    }
+}
+
+impl State for FullState {
+    fn grid_val(&self, r: usize, c: usize) -> i8 {
+        self.board[r][c]
+    }
+
+    fn is_grid_empty(&self, r: usize, c: usize) -> bool {
+        self.board[r][c] == 0
+    }
+
+    fn board(&self) -> [[i8; 9]; 9] {
+        self.board
+    }
+}
+
+impl TrackingCandidates for FullState {
     fn is_candidate_of(&self, r: usize, c: usize, num: i8) -> bool {
         self.candidates[r][c][num as usize]
     }
 }
 
-impl TrackingCandidateCountOfGrid for SudokuPuzzleFull {
+impl TrackingCandidateCountOfGrid for FullState {
     fn candidate_cnt_of_grid(&self, r: usize, c: usize) -> i8 {
         self.candidate_cnt[r][c]
     }
@@ -136,7 +79,7 @@ impl TrackingCandidateCountOfGrid for SudokuPuzzleFull {
     }
 }
 
-impl TrackingGridCountOfCandidate for SudokuPuzzleFull {
+impl TrackingGridCountOfCandidate for FullState {
     fn grid_cnt_of_candidate_in_row(&self, r: usize, num: i8) -> i8 {
         self.grid_cnt_for_candidate_in_row[r][num as usize]
     }
@@ -148,7 +91,7 @@ impl TrackingGridCountOfCandidate for SudokuPuzzleFull {
     }
 }
 
-impl Fillable for SudokuPuzzleFull {
+impl Fillable for FullState {
     // 在格 (r, c) 处填上 num
     fn fill_grid(&mut self, r: usize, c: usize, num: i8) {
         // 记录历史状态
@@ -230,7 +173,7 @@ impl Fillable for SudokuPuzzleFull {
     }
 }
 
-impl CandidatesSettable for SudokuPuzzleFull {
+impl CandidatesSettable for FullState {
     fn remove_candidate_of_grid(&mut self, r: usize, c: usize, to_remove: i8) {
         let to_remove = to_remove as usize;
         let b = coord_2_block(r, c);
@@ -250,39 +193,5 @@ impl CandidatesSettable for SudokuPuzzleFull {
         self.grid_cnt_for_candidate_in_col[c][to_add] += !is_candidate as i8;
         self.grid_cnt_for_candidate_in_blk[b][to_add] += !is_candidate as i8;
         self.candidates[r][c][to_add] = true;
-    }
-}
-
-impl Grid for SudokuPuzzleFull {
-    fn new(puzzle: [[i8; 9]; 9]) -> Self {
-        let mut res = Self {
-            board: [[0; 9]; 9],
-            candidates: [[[true; 10]; 9]; 9],
-            candidate_cnt: [[9; 9]; 9],
-            grid_cnt_for_candidate_in_row: [[9; 10]; 9],
-            grid_cnt_for_candidate_in_col: [[9; 10]; 9],
-            grid_cnt_for_candidate_in_blk: [[9; 10]; 9],
-            history: vec![],
-        };
-        for r in 0..9 {
-            for c in 0..9 {
-                if puzzle[r][c] > 0 {
-                    res.fill_grid(r, c, puzzle[r][c]);
-                }
-            }
-        }
-        res
-    }
-
-    fn grid_val(&self, r: usize, c: usize) -> i8 {
-        self.board[r][c]
-    }
-
-    fn is_grid_empty(&self, r: usize, c: usize) -> bool {
-        self.board[r][c] == 0
-    }
-
-    fn board(&self) -> [[i8; 9]; 9] {
-        self.board
     }
 }

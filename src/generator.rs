@@ -2,18 +2,19 @@ use rand::random;
 
 use super::solver::{Grader, Solver};
 
-pub fn random_sudoku_puzzle<T1, T2>(
-    min_blank_cnt: i32,  // 需要生成的题目最少空格数
-    min_difficulty: i32, // 题目最小难度分数
-    max_difficulty: i32, // 题目最大难度分数
+pub fn random_sudoku_puzzle<S1, S2, T>(
+    min_blank_cnt: i32, // 需要生成的题目最少空格数
+    min_difficulty: T,  // 题目最小难度分数
+    max_difficulty: T,  // 题目最大难度分数
 ) -> [[i8; 9]; 9]
 where
-    T1: Solver,
-    T2: Solver + Grader,
+    S1: Solver + From<[[i8; 9]; 9]>,
+    S2: Solver + Grader<T> + From<[[i8; 9]; 9]>,
+    T: PartialOrd + From<i8>
 {
     loop {
         // 生成随机终局
-        let mut puzzle = T1::new([[0; 9]; 9]).any_solution().unwrap();
+        let mut puzzle = S1::from([[0; 9]; 9]).any_solution().unwrap();
 
         let mut dug = 0; // 已经挖掉的空格数
         let mut trace = vec![]; // 挖空历史记录
@@ -24,7 +25,7 @@ where
         let mut trace_back_cnt = 0; // 回退的次数
         let trace_back_cnt_threshold = 12; // 回退次数阈值，回退次数超过此值会尝试重新生成终局
 
-        let mut difficulty = -1; // 搜索函数在此题目上调用的次数
+        let mut difficulty: T = 0.into(); // 搜索函数在此题目上调用的次数
 
         while trace_back_cnt < trace_back_cnt_threshold
             && !(dug >= min_blank_cnt
@@ -48,7 +49,7 @@ where
                 }
 
                 // 挖空后，判断是否有唯一解
-                let mut solver = T2::new(puzzle);
+                let mut solver = S2::from(puzzle);
                 if solver.have_unique_solution() {
                     difficulty = solver.difficulty();
                     break;

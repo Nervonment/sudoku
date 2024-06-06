@@ -1,21 +1,19 @@
 use sudoku::{
     generator::random_sudoku_puzzle,
-    puzzle::{Grid, SudokuPuzzleFull, SudokuPuzzleSimple},
-    solver::{Grader, Solver, StochasticSolver, TechniquesSolver},
+    solver::{advanced::AdvancedSolver, stochastic::StochasticSolver, Grader, Solver},
+    state::{full_state::FullState, simple_state::SimpleState},
     techniques::{
         hidden_pair_blk, hidden_pair_col, hidden_pair_row, hidden_single_blk, hidden_single_col,
         hidden_single_row, naked_pair_blk, naked_pair_col, naked_pair_row, naked_single, pointing,
-    },
+    }, Grid,
 };
 
 fn main() {
-    let board = random_sudoku_puzzle::<
-        StochasticSolver<SudokuPuzzleSimple>,
-        TechniquesSolver<SudokuPuzzleFull>,
-    >(45, 800, 100000);
-    let puzzle = SudokuPuzzleFull::new(board);
-    // TODO: print the puzzle
-    println!("");
+    let board = random_sudoku_puzzle::<StochasticSolver<SimpleState>, AdvancedSolver<FullState>, f32>(
+        45, 140.0, 2000.0,
+    );
+    let puzzle = FullState::from(board);
+    println!("{}", Grid(board));
     let res_hidden_single_row = hidden_single_row(&puzzle);
     let res_hidden_single_col = hidden_single_col(&puzzle);
     let res_hidden_single_blk = hidden_single_blk(&puzzle);
@@ -38,8 +36,7 @@ fn main() {
     println!("naked pair in col: {:?}", res_naked_pair_col);
     println!("naked pair in blk: {:?}", res_naked_pair_blk);
     println!("pointing: {:?}", res_pointing);
-    let mut solver2 = TechniquesSolver::<SudokuPuzzleFull>::new(board);
+    let mut solver2 = AdvancedSolver::<FullState>::from(board);
     solver2.have_unique_solution();
     println!("{}", solver2.difficulty());
-    println!("{:?}", board);
 }

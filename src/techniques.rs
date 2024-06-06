@@ -1,27 +1,36 @@
 use super::{
-    puzzle::{
-        Grid, TrackingCandidateCountOfGrid, TrackingCandidates, TrackingGridCountOfCandidate,
+    state::{
+        State, TrackingCandidateCountOfGrid, TrackingCandidates, TrackingGridCountOfCandidate,
     },
     utils::{block_idx_2_coord, coord_2_block},
 };
 
+#[derive(PartialEq, Eq, Hash, Debug)]
+pub enum Unit {
+    Row,
+    Col,
+    Block,
+}
+
+// TODO: Add the Direct variants for hidden_pair and pointing
+
 fn hidden_single<T, F1, F2>(
-    puzzle: &T,
+    state: &T,
     grid_cnt_for_candidate: F1,
     coord_transform: F2,
 ) -> Option<(usize, usize, i8)>
 where
-    T: Grid + TrackingCandidates,
+    T: State + TrackingCandidates,
     F1: Fn(&T, usize, i8) -> i8,
     F2: Fn(usize, usize) -> (usize, usize),
 {
     for i in 0..9 {
         for num in 1..=9 {
-            if grid_cnt_for_candidate(puzzle, i, num) == 1 {
+            if grid_cnt_for_candidate(state, i, num) == 1 {
                 let j = (0..9)
                     .filter(|j: &usize| {
                         let (r, c) = coord_transform(i, *j);
-                        puzzle.is_grid_empty(r, c) && puzzle.is_candidate_of(r, c, num)
+                        state.is_grid_empty(r, c) && state.is_candidate_of(r, c, num)
                     })
                     .next()
                     .unwrap();
@@ -34,43 +43,43 @@ where
 }
 
 pub fn hidden_single_row(
-    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountOfCandidate),
+    state: &(impl State + TrackingCandidates + TrackingGridCountOfCandidate),
 ) -> Option<(usize, usize, i8)> {
     hidden_single(
-        puzzle,
+        state,
         |p, r, num| p.grid_cnt_of_candidate_in_row(r, num),
         |r, c| (r, c),
     )
 }
 
 pub fn hidden_single_col(
-    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountOfCandidate),
+    state: &(impl State + TrackingCandidates + TrackingGridCountOfCandidate),
 ) -> Option<(usize, usize, i8)> {
     hidden_single(
-        puzzle,
+        state,
         |p, c, num| p.grid_cnt_of_candidate_in_col(c, num),
         |c, r| (r, c),
     )
 }
 
 pub fn hidden_single_blk(
-    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountOfCandidate),
+    state: &(impl State + TrackingCandidates + TrackingGridCountOfCandidate),
 ) -> Option<(usize, usize, i8)> {
     hidden_single(
-        puzzle,
+        state,
         |p, b, num| p.grid_cnt_of_candidate_in_blk(b, num),
         block_idx_2_coord,
     )
 }
 
 pub fn naked_single(
-    puzzle: &(impl Grid + TrackingCandidates + TrackingCandidateCountOfGrid),
+    state: &(impl State + TrackingCandidates + TrackingCandidateCountOfGrid),
 ) -> Option<(usize, usize, i8)> {
     for r in 0..9 {
         for c in 0..9 {
-            if puzzle.is_grid_empty(r, c) && puzzle.candidate_cnt_of_grid(r, c) == 1 {
+            if state.is_grid_empty(r, c) && state.candidate_cnt_of_grid(r, c) == 1 {
                 let num = (1..=9)
-                    .filter(|num| puzzle.is_candidate_of(r, c, *num))
+                    .filter(|num| state.is_candidate_of(r, c, *num))
                     .next()
                     .unwrap();
                 return Some((r, c, num));
@@ -81,18 +90,18 @@ pub fn naked_single(
 }
 
 fn hidden_pair<T, F1, F2>(
-    puzzle: &T,
+    state: &T,
     grid_cnt_for_candidate: F1,
     coord_transform: F2,
 ) -> Option<((usize, usize), Vec<i8>, (usize, usize), Vec<i8>, i8, i8)>
 where
-    T: Grid + TrackingCandidates,
+    T: State + TrackingCandidates,
     F1: Fn(&T, usize, i8) -> i8,
     F2: Fn(usize, usize) -> (usize, usize),
 {
     for i in 0..9 {
         let nums: Vec<i8> = (1..=9)
-            .filter(|num| grid_cnt_for_candidate(puzzle, i, *num) == 2)
+            .filter(|num| grid_cnt_for_candidate(state, i, *num) == 2)
             .collect();
         for i1 in 0..nums.len() {
             for i2 in 0..i1 {
@@ -100,22 +109,22 @@ where
                 let num2 = nums[i2];
                 if (0..9).all(|j| {
                     let (r, c) = coord_transform(i, j);
-                    !puzzle.is_grid_empty(r, c)
-                        || puzzle.is_candidate_of(r, c, num1) == puzzle.is_candidate_of(r, c, num2)
+                    !state.is_grid_empty(r, c)
+                        || state.is_candidate_of(r, c, num1) == state.is_candidate_of(r, c, num2)
                 }) {
                     let mut jiter = (0..9).filter(|j| {
                         let (r, c) = coord_transform(i, *j);
-                        puzzle.is_grid_empty(r, c) && puzzle.is_candidate_of(r, c, nums[i1])
+                        state.is_grid_empty(r, c) && state.is_candidate_of(r, c, nums[i1])
                     });
                     let j1 = jiter.next().unwrap();
                     let j2 = jiter.next().unwrap();
                     let (r1, c1) = coord_transform(i, j1);
                     let (r2, c2) = coord_transform(i, j2);
                     let removes_1: Vec<i8> = (1..=9)
-                        .filter(|n| *n != num1 && *n != num2 && puzzle.is_candidate_of(r1, c1, *n))
+                        .filter(|n| *n != num1 && *n != num2 && state.is_candidate_of(r1, c1, *n))
                         .collect();
                     let removes_2: Vec<i8> = (1..=9)
-                        .filter(|n| *n != num1 && *n != num2 && puzzle.is_candidate_of(r2, c2, *n))
+                        .filter(|n| *n != num1 && *n != num2 && state.is_candidate_of(r2, c2, *n))
                         .collect();
                     if !removes_1.is_empty() || !removes_2.is_empty() {
                         return Some((
@@ -135,37 +144,37 @@ where
 }
 
 pub fn hidden_pair_row(
-    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountOfCandidate),
+    state: &(impl State + TrackingCandidates + TrackingGridCountOfCandidate),
 ) -> Option<((usize, usize), Vec<i8>, (usize, usize), Vec<i8>, i8, i8)> {
     hidden_pair(
-        puzzle,
+        state,
         |p, r, num| p.grid_cnt_of_candidate_in_row(r, num),
         |r, c| (r, c),
     )
 }
 
 pub fn hidden_pair_col(
-    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountOfCandidate),
+    state: &(impl State + TrackingCandidates + TrackingGridCountOfCandidate),
 ) -> Option<((usize, usize), Vec<i8>, (usize, usize), Vec<i8>, i8, i8)> {
     hidden_pair(
-        puzzle,
+        state,
         |p, c, num| p.grid_cnt_of_candidate_in_col(c, num),
         |c, r| (r, c),
     )
 }
 
 pub fn hidden_pair_blk(
-    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountOfCandidate),
+    state: &(impl State + TrackingCandidates + TrackingGridCountOfCandidate),
 ) -> Option<((usize, usize), Vec<i8>, (usize, usize), Vec<i8>, i8, i8)> {
     hidden_pair(
-        puzzle,
+        state,
         |p, b, num| p.grid_cnt_of_candidate_in_blk(b, num),
         block_idx_2_coord,
     )
 }
 
 fn naked_pair<T, F>(
-    puzzle: &T,
+    state: &T,
     coord_transform: F,
 ) -> Option<(
     (usize, usize),
@@ -176,14 +185,14 @@ fn naked_pair<T, F>(
     Vec<(usize, usize)>,
 )>
 where
-    T: Grid + TrackingCandidates + TrackingCandidateCountOfGrid,
+    T: State + TrackingCandidates + TrackingCandidateCountOfGrid,
     F: Fn(usize, usize) -> (usize, usize),
 {
     for i in 0..9 {
         let js: Vec<usize> = (0..9)
             .filter(|j| {
                 let (r, c) = coord_transform(i, *j);
-                puzzle.is_grid_empty(r, c) && puzzle.candidate_cnt_of_grid(r, c) == 2
+                state.is_grid_empty(r, c) && state.candidate_cnt_of_grid(r, c) == 2
             })
             .collect();
         for i1 in 0..js.len() {
@@ -193,9 +202,9 @@ where
                 let (r1, c1) = coord_transform(i, j1);
                 let (r2, c2) = coord_transform(i, j2);
                 if (1..=9).all(|num| {
-                    puzzle.is_candidate_of(r1, c1, num) == puzzle.is_candidate_of(r2, c2, num)
+                    state.is_candidate_of(r1, c1, num) == state.is_candidate_of(r2, c2, num)
                 }) {
-                    let mut num_iter = (1..=9).filter(|num| puzzle.is_candidate_of(r1, c1, *num));
+                    let mut num_iter = (1..=9).filter(|num| state.is_candidate_of(r1, c1, *num));
                     let num1 = num_iter.next().unwrap();
                     let num2 = num_iter.next().unwrap();
                     let removes_1: Vec<(usize, usize)> = (0..9)
@@ -203,8 +212,8 @@ where
                             let (r, c) = coord_transform(i, *j);
                             *j != j1
                                 && *j != j2
-                                && puzzle.is_grid_empty(r, c)
-                                && puzzle.is_candidate_of(r, c, num1)
+                                && state.is_grid_empty(r, c)
+                                && state.is_candidate_of(r, c, num1)
                         })
                         .map(|j| coord_transform(i, j))
                         .collect();
@@ -213,8 +222,8 @@ where
                             let (r, c) = coord_transform(i, *j);
                             *j != j1
                                 && *j != j2
-                                && puzzle.is_grid_empty(r, c)
-                                && puzzle.is_candidate_of(r, c, num2)
+                                && state.is_grid_empty(r, c)
+                                && state.is_candidate_of(r, c, num2)
                         })
                         .map(|j| coord_transform(i, j))
                         .collect();
@@ -229,7 +238,7 @@ where
 }
 
 pub fn naked_pair_row(
-    puzzle: &(impl Grid + TrackingCandidates + TrackingCandidateCountOfGrid),
+    state: &(impl State + TrackingCandidates + TrackingCandidateCountOfGrid),
 ) -> Option<(
     (usize, usize),
     (usize, usize),
@@ -238,11 +247,11 @@ pub fn naked_pair_row(
     i8,
     Vec<(usize, usize)>,
 )> {
-    naked_pair(puzzle, |r, c| (r, c))
+    naked_pair(state, |r, c| (r, c))
 }
 
 pub fn naked_pair_col(
-    puzzle: &(impl Grid + TrackingCandidates + TrackingCandidateCountOfGrid),
+    state: &(impl State + TrackingCandidates + TrackingCandidateCountOfGrid),
 ) -> Option<(
     (usize, usize),
     (usize, usize),
@@ -251,11 +260,11 @@ pub fn naked_pair_col(
     i8,
     Vec<(usize, usize)>,
 )> {
-    naked_pair(puzzle, |c, r| (r, c))
+    naked_pair(state, |c, r| (r, c))
 }
 
 pub fn naked_pair_blk(
-    puzzle: &(impl Grid + TrackingCandidates + TrackingCandidateCountOfGrid),
+    state: &(impl State + TrackingCandidates + TrackingCandidateCountOfGrid),
 ) -> Option<(
     (usize, usize),
     (usize, usize),
@@ -264,21 +273,21 @@ pub fn naked_pair_blk(
     i8,
     Vec<(usize, usize)>,
 )> {
-    naked_pair(puzzle, block_idx_2_coord)
+    naked_pair(state, block_idx_2_coord)
 }
 
 pub fn pointing(
-    puzzle: &(impl Grid + TrackingCandidates + TrackingGridCountOfCandidate),
+    state: &(impl State + TrackingCandidates + TrackingGridCountOfCandidate),
 ) -> Option<(usize, i8, Vec<(usize, usize)>)> {
     for b in 0..9 {
         for num in 1..=9 {
-            let cnt = puzzle.grid_cnt_of_candidate_in_blk(b, num);
+            let cnt = state.grid_cnt_of_candidate_in_blk(b, num);
             if cnt < 1 || cnt > 3 {
                 continue;
             }
             let mut bidxs = (0..9).filter(|bidx| {
                 let (r, c) = block_idx_2_coord(b, *bidx);
-                puzzle.is_grid_empty(r, c) && puzzle.is_candidate_of(r, c, num)
+                state.is_grid_empty(r, c) && state.is_candidate_of(r, c, num)
             });
             let bidx0 = bidxs.next().unwrap();
             // 在同一行
@@ -287,8 +296,8 @@ pub fn pointing(
                 let removes: Vec<(usize, usize)> = (0..9)
                     .filter(|c| {
                         coord_2_block(r, *c) != b
-                            && puzzle.is_grid_empty(r, *c)
-                            && puzzle.is_candidate_of(r, *c, num)
+                            && state.is_grid_empty(r, *c)
+                            && state.is_candidate_of(r, *c, num)
                     })
                     .map(|c| (r, c))
                     .collect();
@@ -302,8 +311,8 @@ pub fn pointing(
                 let removes: Vec<(usize, usize)> = (0..9)
                     .filter(|r| {
                         coord_2_block(*r, c) != b
-                            && puzzle.is_grid_empty(*r, c)
-                            && puzzle.is_candidate_of(*r, c, num)
+                            && state.is_grid_empty(*r, c)
+                            && state.is_candidate_of(*r, c, num)
                     })
                     .map(|r| (r, c))
                     .collect();

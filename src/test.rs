@@ -3,25 +3,20 @@ use rand::random;
 use crate::{
     generator::random_sudoku_puzzle,
     judge::judge_sudoku,
-    puzzle::{
-        SudokuPuzzleFull, TrackingCandidateCountOfGrid, TrackingCandidates,
-        TrackingGridCountOfCandidate,
+    solver::{advanced::AdvancedSolver, stochastic::StochasticSolver, Solver},
+    state::{
+        full_state::FullState, simple_state::SimpleState, CandidatesSettable, Fillable, State,
+        TrackingCandidateCountOfGrid, TrackingCandidates, TrackingGridCountOfCandidate,
     },
-    solver::TechniquesSolver,
-    utils::{block_idx_2_coord, coord_2_block_idx},
-};
-
-use super::{
-    puzzle::{CandidatesSettable, Fillable, Grid, SudokuPuzzleSimple},
-    solver::{Solver, StochasticSolver},
     techniques::{
         hidden_pair_row, hidden_single_blk, hidden_single_col, hidden_single_row, naked_single,
     },
+    utils::{block_idx_2_coord, coord_2_block_idx},
 };
 
 fn random_sudoku_puzzle_normal() -> [[i8; 9]; 9] {
-    random_sudoku_puzzle::<StochasticSolver<SudokuPuzzleSimple>, TechniquesSolver<SudokuPuzzleFull>>(
-        45, 100, 10000,
+    random_sudoku_puzzle::<StochasticSolver<SimpleState>, AdvancedSolver<FullState>, f32>(
+        45, 0.0, 1000.0,
     )
 }
 
@@ -29,7 +24,7 @@ fn random_sudoku_puzzle_normal() -> [[i8; 9]; 9] {
 fn sudoku_puzzle() {
     for _ in 0..100 {
         let puzzle = random_sudoku_puzzle_normal();
-        let mut puzzle = SudokuPuzzleFull::new(puzzle);
+        let mut puzzle = FullState::from(puzzle);
 
         let mut moves = vec![];
         for _ in 0..10 {
@@ -141,7 +136,7 @@ fn sudoku_puzzle() {
 fn techniques_single() {
     for _ in 0..100 {
         let puzzle = random_sudoku_puzzle_normal();
-        let mut puzzle = SudokuPuzzleFull::new(puzzle);
+        let mut puzzle = FullState::from(puzzle);
         let res_hidden_single_row = hidden_single_row(&puzzle);
         let res_hidden_single_col = hidden_single_col(&puzzle);
         let res_hidden_single_blk = hidden_single_blk(&puzzle);
@@ -170,10 +165,10 @@ fn techniques_pair() {
         let mut puzzle = random_sudoku_puzzle_normal();
         while res_hidden_pair_row.is_none() {
             puzzle = random_sudoku_puzzle_normal();
-            let puzzle = SudokuPuzzleFull::new(puzzle);
+            let puzzle = FullState::from(puzzle);
             res_hidden_pair_row = hidden_pair_row(&puzzle);
         }
-        let mut puzzle = SudokuPuzzleFull::new(puzzle);
+        let mut puzzle = FullState::from(puzzle);
         let ((r1, c1), _, (r2, c2), _, num1, num2) = res_hidden_pair_row.clone().unwrap();
         let nums: Vec<i8> = (1..=9).filter(|n| *n != num1 && *n != num2).collect();
         for num in &nums {
@@ -189,8 +184,8 @@ fn techniques_pair() {
 fn sudoku_solver() {
     for _ in 0..100 {
         let puzzle = random_sudoku_puzzle_normal();
-        let mut solver1 = StochasticSolver::<SudokuPuzzleSimple>::new(puzzle);
-        let mut solver2 = TechniquesSolver::<SudokuPuzzleFull>::new(puzzle);
+        let mut solver1 = StochasticSolver::<SimpleState>::from(puzzle);
+        let mut solver2 = AdvancedSolver::<FullState>::from(puzzle);
         assert!(solver1.have_unique_solution());
         assert!(solver2.have_unique_solution());
         let solution1 = solver1.any_solution().unwrap();

@@ -1,22 +1,21 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use sudoku::{
     generator::random_sudoku_puzzle,
-    puzzle::{SudokuPuzzleFull, SudokuPuzzleSimple},
-    solver::{Solver, StochasticSolver, TechniquesSolver},
+    solver::{advanced::AdvancedSolver, stochastic::StochasticSolver, Solver},
+    state::{full_state::FullState, simple_state::SimpleState},
 };
 
 fn benchmarks(c: &mut Criterion) {
-    let puzzle = random_sudoku_puzzle::<
-        StochasticSolver<SudokuPuzzleSimple>,
-        TechniquesSolver<SudokuPuzzleFull>,
-    >(45, 100, 10000);
-    let mut solver = StochasticSolver::<SudokuPuzzleSimple>::new(puzzle);
+    let puzzle = random_sudoku_puzzle::<StochasticSolver<SimpleState>, AdvancedSolver<FullState>, f32>(
+        45, 0.0, 1000.0,
+    );
+    let mut solver = StochasticSolver::<SimpleState>::from(puzzle);
     c.bench_function("StochasticSolver", |b| {
         b.iter(|| {
             solver.any_solution();
         })
     });
-    let mut solver = TechniquesSolver::<SudokuPuzzleFull>::new(puzzle);
+    let mut solver = AdvancedSolver::<FullState>::from(puzzle);
     c.bench_function("TechniquesSolver", |b| {
         b.iter(|| {
             solver.any_solution();
