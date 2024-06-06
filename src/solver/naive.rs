@@ -3,7 +3,7 @@ use crate::{
         CandidatesSettable, Fillable, State, TrackingCandidateCountOfCell, TrackingCandidates,
         TrackingCellCountOfCandidate,
     },
-    techniques::{hidden_single_blk, hidden_single_col, hidden_single_row},
+    techniques::{hidden_single_blk, hidden_single_col, hidden_single_row}, Grid,
 };
 
 use super::{Grader, Solver};
@@ -17,7 +17,7 @@ where
         + TrackingCandidateCountOfCell
         + TrackingCellCountOfCandidate,
 {
-    puzzle: [[i8; 9]; 9],
+    puzzle: Grid,
     state: T,
     solution_cnt: u32,
     invoke_cnt: i32,
@@ -40,7 +40,7 @@ where
 
     fn search(&mut self, solution_cnt_needed: u32) -> bool {
         self.invoke_cnt += 1;
-        if self.state.grid().iter().flatten().all(|v| *v > 0) {
+        if self.state.grid().0.iter().flatten().all(|v| *v > 0) {
             self.solution_cnt += 1;
             return solution_cnt_needed <= self.solution_cnt;
         }
@@ -64,7 +64,7 @@ where
     }
 }
 
-impl<T> From<[[i8; 9]; 9]> for NaiveSolver<T>
+impl<T> From<Grid> for NaiveSolver<T>
 where
     T: State
         + Fillable
@@ -73,7 +73,7 @@ where
         + TrackingCandidateCountOfCell
         + TrackingCellCountOfCandidate,
 {
-    fn from(puzzle: [[i8; 9]; 9]) -> Self {
+    fn from(puzzle: Grid) -> Self {
         Self {
             puzzle,
             state: T::from(puzzle),
@@ -92,7 +92,7 @@ where
         + TrackingCandidateCountOfCell
         + TrackingCellCountOfCandidate,
 {
-    fn any_solution(&mut self) -> Option<[[i8; 9]; 9]> {
+    fn any_solution(&mut self) -> Option<Grid> {
         self.init_search();
         if self.search(1) {
             return Some(self.state.grid());

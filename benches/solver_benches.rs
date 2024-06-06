@@ -7,7 +7,7 @@ use sudoku::{
 
 fn benchmarks(c: &mut Criterion) {
     let puzzle = random_sudoku_puzzle::<StochasticSolver<SimpleState>, AdvancedSolver<FullState>, f32>(
-        45, 0.0, 1000.0,
+        45, 80.0, 1000.0,
     );
     let mut solver = StochasticSolver::<SimpleState>::from(puzzle);
     c.bench_function("StochasticSolver", |b| {

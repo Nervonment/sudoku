@@ -1,7 +1,9 @@
+use crate::Grid;
+
 use super::state::State;
 
 pub trait Solver {
-    fn any_solution(&mut self) -> Option<[[i8; 9]; 9]>;
+    fn any_solution(&mut self) -> Option<Grid>;
     fn solution_cnt(&mut self) -> u32;
     fn have_unique_solution(&mut self) -> bool;
 }

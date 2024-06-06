@@ -11,10 +11,10 @@ use crate::{
     techniques::{
         hidden_pair_row, hidden_single_blk, hidden_single_col, hidden_single_row, naked_single,
     },
-    utils::{block_idx_2_coord, coord_2_block_idx},
+    utils::{block_idx_2_coord, coord_2_block_idx}, Grid,
 };
 
-fn random_sudoku_puzzle_normal() -> [[i8; 9]; 9] {
+fn random_sudoku_puzzle_normal() -> Grid {
     random_sudoku_puzzle::<StochasticSolver<SimpleState>, AdvancedSolver<FullState>, f32>(
         45, 60.0, 1000.0,
     )

@@ -1,7 +1,9 @@
-pub trait State: From<[[i8; 9]; 9]> {
+use crate::Grid;
+
+pub trait State: From<Grid> {
     fn cell_val(&self, r: usize, c: usize) -> i8;
     fn is_cell_empty(&self, r: usize, c: usize) -> bool;
-    fn grid(&self) -> [[i8; 9]; 9];
+    fn grid(&self) -> Grid;
 }
 
 pub trait TrackingCandidates: State {

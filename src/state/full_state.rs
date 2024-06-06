@@ -1,4 +1,7 @@
-use crate::utils::{block_idx_2_coord, coord_2_block};
+use crate::{
+    utils::{block_idx_2_coord, coord_2_block},
+    Grid,
+};
 
 use super::{
     CandidatesSettable, Fillable, State, TrackingCandidateCountOfCell, TrackingCandidates,
@@ -6,7 +9,7 @@ use super::{
 };
 
 pub struct FullState {
-    grid: [[i8; 9]; 9],
+    grid: Grid,
     candidates: [[[bool; 10]; 9]; 9],
     candidate_cnt: [[i8; 9]; 9],
     cell_cnt_for_candidate_in_row: [[i8; 10]; 9],
@@ -21,10 +24,10 @@ pub struct FullState {
     )>,
 }
 
-impl From<[[i8; 9]; 9]> for FullState {
-    fn from(puzzle: [[i8; 9]; 9]) -> Self {
+impl From<Grid> for FullState {
+    fn from(puzzle: Grid) -> Self {
         let mut res = Self {
-            grid: [[0; 9]; 9],
+            grid: Grid([[0; 9]; 9]),
             candidates: [[[true; 10]; 9]; 9],
             candidate_cnt: [[9; 9]; 9],
             cell_cnt_for_candidate_in_row: [[9; 10]; 9],
@@ -34,8 +37,8 @@ impl From<[[i8; 9]; 9]> for FullState {
         };
         for r in 0..9 {
             for c in 0..9 {
-                if puzzle[r][c] > 0 {
-                    res.fill_cell(r, c, puzzle[r][c]);
+                if puzzle.0[r][c] > 0 {
+                    res.fill_cell(r, c, puzzle.0[r][c]);
                 }
             }
         }
@@ -45,14 +48,14 @@ impl From<[[i8; 9]; 9]> for FullState {
 
 impl State for FullState {
     fn cell_val(&self, r: usize, c: usize) -> i8 {
-        self.grid[r][c]
+        self.grid.0[r][c]
     }
 
     fn is_cell_empty(&self, r: usize, c: usize) -> bool {
-        self.grid[r][c] == 0
+        self.grid.0[r][c] == 0
     }
 
-    fn grid(&self) -> [[i8; 9]; 9] {
+    fn grid(&self) -> Grid {
         self.grid
     }
 }
@@ -103,7 +106,7 @@ impl Fillable for FullState {
             self.cell_cnt_for_candidate_in_blk,
         ));
 
-        self.grid[r][c] = num;
+        self.grid.0[r][c] = num;
         let num = num as usize;
         let b = coord_2_block(r, c);
 
@@ -138,14 +141,14 @@ impl Fillable for FullState {
         for r in 0..9 {
             let mut cell_cnt = 0;
             for c in 0..9 {
-                cell_cnt += (self.candidates[r][c][num] && self.grid[r][c] == 0) as i8;
+                cell_cnt += (self.candidates[r][c][num] && self.grid.0[r][c] == 0) as i8;
             }
             self.cell_cnt_for_candidate_in_row[r][num] = cell_cnt;
         }
         for c in 0..9 {
             let mut cell_cnt = 0;
             for r in 0..9 {
-                cell_cnt += (self.candidates[r][c][num] && self.grid[r][c] == 0) as i8;
+                cell_cnt += (self.candidates[r][c][num] && self.grid.0[r][c] == 0) as i8;
             }
             self.cell_cnt_for_candidate_in_col[c][num] = cell_cnt;
         }
@@ -153,7 +156,7 @@ impl Fillable for FullState {
             let mut cell_cnt = 0;
             for bidx in 0..9 {
                 let (r, c) = block_idx_2_coord(b, bidx);
-                cell_cnt += (self.candidates[r][c][num] && self.grid[r][c] == 0) as i8;
+                cell_cnt += (self.candidates[r][c][num] && self.grid.0[r][c] == 0) as i8;
             }
             self.cell_cnt_for_candidate_in_blk[b][num] = cell_cnt;
         }
@@ -162,7 +165,7 @@ impl Fillable for FullState {
     // 撤销上一步填充
     fn unfill_cell(&mut self, r: usize, c: usize) {
         // 回退
-        self.grid[r][c] = 0;
+        self.grid.0[r][c] = 0;
         (
             self.candidates,
             self.candidate_cnt,

@@ -1,6 +1,6 @@
 use super::{next_blank, Solver};
 
-use crate::state::{Fillable, State, TrackingCandidates};
+use crate::{state::{Fillable, State, TrackingCandidates}, Grid};
 
 use rand::prelude::*;
 
@@ -8,7 +8,7 @@ pub struct StochasticSolver<T>
 where
     T: State + Fillable + TrackingCandidates,
 {
-    puzzle: [[i8; 9]; 9],
+    puzzle: Grid,
     state: T,
     solution_cnt: u32,
 }
@@ -50,11 +50,11 @@ where
     }
 }
 
-impl<T> From<[[i8; 9]; 9]> for StochasticSolver<T>
+impl<T> From<Grid> for StochasticSolver<T>
 where
     T: State + Fillable + TrackingCandidates,
 {
-    fn from(puzzle: [[i8; 9]; 9]) -> Self {
+    fn from(puzzle: Grid) -> Self {
         Self {
             puzzle,
             state: T::from(puzzle),
@@ -67,7 +67,7 @@ impl<T> Solver for StochasticSolver<T>
 where
     T: State + Fillable + TrackingCandidates,
 {
-    fn any_solution(&mut self) -> Option<[[i8; 9]; 9]> {
+    fn any_solution(&mut self) -> Option<Grid> {
         self.init_search();
         if self.search(0, 0, 1) {
             return Some(self.state.grid());

@@ -1,20 +1,22 @@
 use rand::random;
 
+use crate::Grid;
+
 use super::solver::{Grader, Solver};
 
 pub fn random_sudoku_puzzle<S1, S2, T>(
     min_blank_cnt: i32, // 需要生成的题目最少空格数
     min_difficulty: T,  // 题目最小难度分数
     max_difficulty: T,  // 题目最大难度分数
-) -> [[i8; 9]; 9]
+) -> Grid
 where
-    S1: Solver + From<[[i8; 9]; 9]>,
-    S2: Solver + Grader<T> + From<[[i8; 9]; 9]>,
+    S1: Solver + From<Grid>,
+    S2: Solver + Grader<T> + From<Grid>,
     T: PartialOrd + From<i8>
 {
     loop {
         // 生成随机终局
-        let mut puzzle = S1::from([[0; 9]; 9]).any_solution().unwrap();
+        let mut puzzle = S1::from(Grid([[0; 9]; 9])).any_solution().unwrap();
 
         let mut dug = 0; // 已经挖掉的空格数
         let mut trace = vec![]; // 挖空历史记录
@@ -25,7 +27,7 @@ where
         let mut trace_back_cnt = 0; // 回退的次数
         let trace_back_cnt_threshold = 12; // 回退次数阈值，回退次数超过此值会尝试重新生成终局
 
-        let mut difficulty: T = 0.into(); // 搜索函数在此题目上调用的次数
+        let mut difficulty: T = 0.into(); // 难度分数
 
         while trace_back_cnt < trace_back_cnt_threshold
             && !(dug >= min_blank_cnt
@@ -41,11 +43,11 @@ where
                 for _ in 0..step {
                     // 随机选取非空格
                     let (mut r, mut c) = (random::<usize>() % 9, random::<usize>() % 9);
-                    while puzzle[r][c] == 0 {
+                    while puzzle.0[r][c] == 0 {
                         (r, c) = (random::<usize>() % 9, random::<usize>() % 9);
                     }
-                    trace.push((r, c, puzzle[r][c]));
-                    puzzle[r][c] = 0;
+                    trace.push((r, c, puzzle.0[r][c]));
+                    puzzle.0[r][c] = 0;
                 }
 
                 // 挖空后，判断是否有唯一解
@@ -61,7 +63,7 @@ where
                     let last = trace.pop();
                     if last.is_some() {
                         let (r, c, num) = last.unwrap();
-                        puzzle[r][c] = num;
+                        puzzle.0[r][c] = num;
                     }
                 }
 
@@ -71,7 +73,7 @@ where
                         let last = trace.pop();
                         if last.is_some() {
                             let (r, c, num) = last.unwrap();
-                            puzzle[r][c] = num;
+                            puzzle.0[r][c] = num;
                         }
                     }
                     dug -= trace_back_step;
