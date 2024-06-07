@@ -1,7 +1,7 @@
 use crate::{
     state::{
-        CandidatesSettable, Fillable, State, TrackingCandidateCountOfCell, TrackingCandidates,
-        TrackingCellCountOfCandidate,
+        full_state::FullState, CandidatesSettable, Fillable, State, TrackingCandidateCountOfCell,
+        TrackingCandidates, TrackingCellCountOfCandidate,
     },
     techniques::{
         hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
@@ -15,7 +15,7 @@ use crate::{
 
 use super::{Grader, Solver};
 
-pub struct AdvancedSolver<T>
+pub struct AdvancedSolver<T = FullState>
 where
     T: State
         + Fillable
@@ -28,7 +28,9 @@ where
     state: T,
     solution_cnt: u32,
     tmp_score: f32,
+    tmp_max_tech_score: f32,
     score: f32,
+    max_tech_score: f32,
 }
 
 impl<T> AdvancedSolver<T>
@@ -49,6 +51,7 @@ where
         if self.state.grid().0.iter().flatten().all(|v| *v > 0) {
             self.solution_cnt += 1;
             self.score = self.tmp_score;
+            self.max_tech_score = self.tmp_max_tech_score;
             return solution_cnt_needed <= self.solution_cnt;
         }
 
@@ -98,6 +101,8 @@ where
                     }
                 }
                 self.tmp_score += score;
+                let tmp_max_tech_score = self.tmp_max_tech_score;
+                self.tmp_max_tech_score = score.max(self.tmp_max_tech_score);
                 if self.search(solution_cnt_needed) {
                     return true;
                 }
@@ -109,6 +114,7 @@ where
                     }
                 }
                 self.tmp_score -= score;
+                self.tmp_max_tech_score = tmp_max_tech_score;
                 return false;
             }
         }
@@ -135,10 +141,13 @@ where
             if self.state.is_candidate_of(r, c, num) {
                 self.state.fill_cell(r, c, num);
                 self.tmp_score += 8.0;
+                let tmp_max_tech_score = self.tmp_max_tech_score;
+                self.tmp_max_tech_score = 8.0f32.max(self.tmp_max_tech_score);
                 if self.search(solution_cnt_needed) {
                     return true;
                 }
                 self.tmp_score -= 8.0;
+                self.tmp_max_tech_score = tmp_max_tech_score;
                 self.state.unfill_cell(r, c);
             }
         }
@@ -162,7 +171,9 @@ where
             state: T::from(puzzle),
             solution_cnt: 0,
             tmp_score: 0.0,
+            tmp_max_tech_score: 1.0,
             score: 0.0,
+            max_tech_score: 0.0,
         }
     }
 }
@@ -207,6 +218,6 @@ where
         + TrackingCellCountOfCandidate,
 {
     fn difficulty(&self) -> f32 {
-        self.score
+        self.score * self.max_tech_score.ln().max(1.0)
     }
 }

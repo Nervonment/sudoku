@@ -1,10 +1,13 @@
 use super::{next_blank, Solver};
 
-use crate::{state::{Fillable, State, TrackingCandidates}, Grid};
+use crate::{
+    state::{simple_state::SimpleState, Fillable, State, TrackingCandidates},
+    Grid,
+};
 
 use rand::prelude::*;
 
-pub struct StochasticSolver<T>
+pub struct StochasticSolver<T = SimpleState>
 where
     T: State + Fillable + TrackingCandidates,
 {
