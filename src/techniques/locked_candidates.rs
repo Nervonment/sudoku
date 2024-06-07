@@ -1,19 +1,23 @@
 use crate::{
-    state::{full_state::FullState, State, TrackingCandidates, TrackingCellCountOfCandidate},
+    state::{State, TrackingCandidates, TrackingCellCountOfCandidate},
     utils::{block_idx_2_coord, coord_2_block},
 };
 
-use super::{ReducingCandidates, Technique};
+use super::{House, ReducingCandidates, Technique};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PointingInfo {
     pub block: usize,
+    pub rem_house: House,
     pub rem_num: i8,
     pub rem_cells: Vec<(usize, usize)>,
 }
-pub struct Pointing(Option<PointingInfo>);
-impl Technique for Pointing {
-    fn check(state: &FullState) -> Self {
+pub struct Pointing(pub Option<PointingInfo>);
+impl<T> Technique<T> for Pointing
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn check(state: &T) -> Self {
         for b in 0..9 {
             for num in 1..=9 {
                 let cnt = state.cell_cnt_of_candidate_in_blk(b, num);
@@ -39,6 +43,7 @@ impl Technique for Pointing {
                     if !removes.is_empty() {
                         return Pointing(Some(PointingInfo {
                             block: b,
+                            rem_house: House::Row(r),
                             rem_num: num,
                             rem_cells: removes,
                         }));
@@ -58,6 +63,7 @@ impl Technique for Pointing {
                     if !removes.is_empty() {
                         return Pointing(Some(PointingInfo {
                             block: b,
+                            rem_house: House::Column(c),
                             rem_num: num,
                             rem_cells: removes,
                         }));
@@ -67,14 +73,20 @@ impl Technique for Pointing {
         }
         Pointing(None)
     }
+    fn score() -> f32 {
+        2.6
+    }
 }
-
-impl ReducingCandidates for Pointing {
-    fn reducible(&self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for Pointing {
+    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
         self.0
             .clone()
             .map(|info| (vec![(info.rem_cells, vec![info.rem_num])]))
     }
+}
+impl<T> ReducingCandidates<T> for Pointing where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate
+{
 }
 
 // TODO: Claiming

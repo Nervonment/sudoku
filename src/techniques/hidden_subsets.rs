@@ -1,5 +1,5 @@
 use crate::{
-    state::{full_state::FullState, State, TrackingCandidates, TrackingCellCountOfCandidate},
+    state::{State, TrackingCandidates, TrackingCellCountOfCandidate},
     utils::block_idx_2_coord,
 };
 
@@ -68,7 +68,7 @@ where
     None
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct HiddenPairInfo {
     pub house: House,
     pub nums: [i8; 2],
@@ -78,9 +78,12 @@ pub struct HiddenPairInfo {
     pub rem_nums_2: Vec<i8>,
 }
 
-pub struct HiddenPairRow(Option<HiddenPairInfo>);
-impl Technique for HiddenPairRow {
-    fn check(state: &FullState) -> Self {
+pub struct HiddenPairRow(pub Option<HiddenPairInfo>);
+impl<T> Technique<T> for HiddenPairRow
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn check(state: &T) -> Self {
         Self(
             hidden_pair(
                 state,
@@ -97,10 +100,13 @@ impl Technique for HiddenPairRow {
             }),
         )
     }
+    fn score() -> f32 {
+        3.4
+    }
 }
-impl ReducingCandidates for HiddenPairRow {
-    fn reducible(&self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
-        self.0.clone().map(|info| {
+impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for HiddenPairRow {
+    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+        self.0.map(|info| {
             vec![
                 (vec![info.rem_cell_1], info.rem_nums_1),
                 (vec![info.rem_cell_2], info.rem_nums_2),
@@ -108,10 +114,17 @@ impl ReducingCandidates for HiddenPairRow {
         })
     }
 }
+impl<T> ReducingCandidates<T> for HiddenPairRow where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate
+{
+}
 
-pub struct HiddenPairColumn(Option<HiddenPairInfo>);
-impl Technique for HiddenPairColumn {
-    fn check(state: &FullState) -> Self {
+pub struct HiddenPairColumn(pub Option<HiddenPairInfo>);
+impl<T> Technique<T> for HiddenPairColumn
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn check(state: &T) -> Self {
         Self(
             hidden_pair(
                 state,
@@ -128,10 +141,13 @@ impl Technique for HiddenPairColumn {
             }),
         )
     }
+    fn score() -> f32 {
+        3.4
+    }
 }
-impl ReducingCandidates for HiddenPairColumn {
-    fn reducible(&self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
-        self.0.clone().map(|info| {
+impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for HiddenPairColumn {
+    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+        self.0.map(|info| {
             vec![
                 (vec![info.rem_cell_1], info.rem_nums_1),
                 (vec![info.rem_cell_2], info.rem_nums_2),
@@ -139,10 +155,16 @@ impl ReducingCandidates for HiddenPairColumn {
         })
     }
 }
-
-pub struct HiddenPairBlock(Option<HiddenPairInfo>);
-impl Technique for HiddenPairBlock {
-    fn check(state: &FullState) -> Self {
+impl<T> ReducingCandidates<T> for HiddenPairColumn where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate
+{
+}
+pub struct HiddenPairBlock(pub Option<HiddenPairInfo>);
+impl<T> Technique<T> for HiddenPairBlock
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn check(state: &T) -> Self {
         Self(
             hidden_pair(
                 state,
@@ -159,14 +181,21 @@ impl Technique for HiddenPairBlock {
             }),
         )
     }
+    fn score() -> f32 {
+        3.4
+    }
 }
-impl ReducingCandidates for HiddenPairBlock {
-    fn reducible(&self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
-        self.0.clone().map(|info| {
+impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for HiddenPairBlock {
+    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+        self.0.map(|info| {
             vec![
                 (vec![info.rem_cell_1], info.rem_nums_1),
                 (vec![info.rem_cell_2], info.rem_nums_2),
             ]
         })
     }
+}
+impl<T> ReducingCandidates<T> for HiddenPairBlock where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate
+{
 }

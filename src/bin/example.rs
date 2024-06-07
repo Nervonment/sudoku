@@ -3,28 +3,31 @@ use sudoku::{
     solver::{advanced::AdvancedSolver, stochastic::StochasticSolver, Grader, Solver},
     state::{full_state::FullState, simple_state::SimpleState},
     techniques::{
-        hidden_pair_blk, hidden_pair_col, hidden_pair_row, hidden_single_blk, hidden_single_col,
-        hidden_single_row, naked_pair_blk, naked_pair_col, naked_pair_row, naked_single, pointing,
-    }
+        hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
+        locked_candidates::Pointing,
+        naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
+        singles::{HiddenSingleBlock, HiddenSingleColumn, HiddenSingleRow, NakedSingle},
+        Technique,
+    },
 };
 
 fn main() {
     let grid = random_sudoku_puzzle::<StochasticSolver<SimpleState>, AdvancedSolver<FullState>, f32>(
-        45, 140.0, 2000.0,
+        50, 0.0, 75.0,
     );
     let puzzle = FullState::from(grid);
     println!("{}", grid);
-    let res_hidden_single_row = hidden_single_row(&puzzle);
-    let res_hidden_single_col = hidden_single_col(&puzzle);
-    let res_hidden_single_blk = hidden_single_blk(&puzzle);
-    let res_naked_single = naked_single(&puzzle);
-    let res_hidden_pair_row = hidden_pair_row(&puzzle);
-    let res_hidden_pair_col = hidden_pair_col(&puzzle);
-    let res_hidden_pair_blk = hidden_pair_blk(&puzzle);
-    let res_naked_pair_row = naked_pair_row(&puzzle);
-    let res_naked_pair_col = naked_pair_col(&puzzle);
-    let res_naked_pair_blk = naked_pair_blk(&puzzle);
-    let res_pointing = pointing(&puzzle);
+    let res_hidden_single_row = HiddenSingleRow::check(&puzzle).0;
+    let res_hidden_single_col = HiddenSingleColumn::check(&puzzle).0;
+    let res_hidden_single_blk = HiddenSingleBlock::check(&puzzle).0;
+    let res_naked_single = NakedSingle::check(&puzzle).0;
+    let res_hidden_pair_row = HiddenPairRow::check(&puzzle).0;
+    let res_hidden_pair_col = HiddenPairColumn::check(&puzzle).0;
+    let res_hidden_pair_blk = HiddenPairBlock::check(&puzzle).0;
+    let res_naked_pair_row = NakedPairRow::check(&puzzle).0;
+    let res_naked_pair_col = NakedPairColumn::check(&puzzle).0;
+    let res_naked_pair_blk = NakedPairBlock::check(&puzzle).0;
+    let res_pointing = Pointing::check(&puzzle).0;
     println!("hidden single in row: {:?}", res_hidden_single_row);
     println!("hidden single in col: {:?}", res_hidden_single_col);
     println!("hidden single in blk: {:?}", res_hidden_single_blk);

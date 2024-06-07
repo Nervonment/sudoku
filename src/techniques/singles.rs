@@ -1,7 +1,6 @@
 use crate::{
     state::{
-        full_state::FullState, State, TrackingCandidateCountOfCell, TrackingCandidates,
-        TrackingCellCountOfCandidate,
+        State, TrackingCandidateCountOfCell, TrackingCandidates, TrackingCellCountOfCandidate,
     },
     utils::block_idx_2_coord,
 };
@@ -36,15 +35,18 @@ where
     None
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct HiddenSingleInfo {
     pub house: House,
     pub fillable: (usize, usize, i8),
 }
 
-pub struct HiddenSingleRow(Option<HiddenSingleInfo>);
-impl Technique for HiddenSingleRow {
-    fn check(state: &FullState) -> Self {
+pub struct HiddenSingleRow(pub Option<HiddenSingleInfo>);
+impl<T> Technique<T> for HiddenSingleRow
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn check(state: &T) -> Self {
         Self(
             hidden_single(
                 state,
@@ -57,16 +59,26 @@ impl Technique for HiddenSingleRow {
             }),
         )
     }
+    fn score() -> f32 {
+        1.5
+    }
 }
-impl Direct for HiddenSingleRow {
-    fn fillable(&self) -> Option<(usize, usize, i8)> {
+impl Into<Option<(usize, usize, i8)>> for HiddenSingleRow {
+    fn into(self) -> Option<(usize, usize, i8)> {
         self.0.map(|info| (info.fillable))
     }
 }
+impl<T> Direct<T> for HiddenSingleRow where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate
+{
+}
 
-pub struct HiddenSingleColumn(Option<HiddenSingleInfo>);
-impl Technique for HiddenSingleColumn {
-    fn check(state: &FullState) -> Self {
+pub struct HiddenSingleColumn(pub Option<HiddenSingleInfo>);
+impl<T> Technique<T> for HiddenSingleColumn
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn check(state: &T) -> Self {
         Self(
             hidden_single(
                 state,
@@ -79,16 +91,26 @@ impl Technique for HiddenSingleColumn {
             }),
         )
     }
+    fn score() -> f32 {
+        1.5
+    }
 }
-impl Direct for HiddenSingleColumn {
-    fn fillable(&self) -> Option<(usize, usize, i8)> {
+impl Into<Option<(usize, usize, i8)>> for HiddenSingleColumn {
+    fn into(self) -> Option<(usize, usize, i8)> {
         self.0.map(|info| (info.fillable))
     }
 }
+impl<T> Direct<T> for HiddenSingleColumn where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate
+{
+}
 
-pub struct HiddenSingleBlock(Option<HiddenSingleInfo>);
-impl Technique for HiddenSingleBlock {
-    fn check(state: &FullState) -> Self {
+pub struct HiddenSingleBlock(pub Option<HiddenSingleInfo>);
+impl<T> Technique<T> for HiddenSingleBlock
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn check(state: &T) -> Self {
         Self(
             hidden_single(
                 state,
@@ -101,18 +123,28 @@ impl Technique for HiddenSingleBlock {
             }),
         )
     }
+    fn score() -> f32 {
+        1.2
+    }
 }
-impl Direct for HiddenSingleBlock {
-    fn fillable(&self) -> Option<(usize, usize, i8)> {
+impl Into<Option<(usize, usize, i8)>> for HiddenSingleBlock {
+    fn into(self) -> Option<(usize, usize, i8)> {
         self.0.map(|info| (info.fillable))
     }
 }
+impl<T> Direct<T> for HiddenSingleBlock where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate
+{
+}
 
-#[derive(Clone, Copy)]
-pub struct NakedSingleInfo((usize, usize, i8));
-pub struct NakedSingle(Option<NakedSingleInfo>);
-impl Technique for NakedSingle {
-    fn check(state: &FullState) -> Self {
+#[derive(Clone, Copy, Debug)]
+pub struct NakedSingleInfo(pub (usize, usize, i8));
+pub struct NakedSingle(pub Option<NakedSingleInfo>);
+impl<T> Technique<T> for NakedSingle
+where
+    T: State + TrackingCandidates + TrackingCandidateCountOfCell,
+{
+    fn check(state: &T) -> Self {
         Self(
             (|| {
                 for r in 0..9 {
@@ -131,9 +163,13 @@ impl Technique for NakedSingle {
             .map(|res| NakedSingleInfo(res)),
         )
     }
+    fn score() -> f32 {
+        2.3
+    }
 }
-impl Direct for NakedSingle {
-    fn fillable(&self) -> Option<(usize, usize, i8)> {
+impl Into<Option<(usize, usize, i8)>> for NakedSingle {
+    fn into(self) -> Option<(usize, usize, i8)> {
         self.0.map(|info| info.0)
     }
 }
+impl<T> Direct<T> for NakedSingle where T: State + TrackingCandidates + TrackingCandidateCountOfCell {}

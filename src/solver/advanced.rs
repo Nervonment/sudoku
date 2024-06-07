@@ -4,8 +4,13 @@ use crate::{
         TrackingCellCountOfCandidate,
     },
     techniques::{
-        hidden_pair_blk, hidden_pair_col, hidden_pair_row, hidden_single_blk, hidden_single_col, hidden_single_row, naked_pair_blk, naked_pair_col, naked_pair_row, naked_single, pointing, singles::{HiddenSingleColumn, HiddenSingleRow}, Direct, Technique
-    }, Grid,
+        hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
+        locked_candidates::Pointing,
+        naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
+        singles::{HiddenSingleBlock, HiddenSingleColumn, HiddenSingleRow, NakedSingle},
+        Direct, ReducingCandidates,
+    },
+    Grid,
 };
 
 use super::{Grader, Solver};
@@ -23,7 +28,7 @@ where
     state: T,
     solution_cnt: u32,
     tmp_score: f32,
-    score: f32
+    score: f32,
 }
 
 impl<T> AdvancedSolver<T>
@@ -47,117 +52,66 @@ where
             return solution_cnt_needed <= self.solution_cnt;
         }
 
-        // let direct_techniques = [
-        //     HiddenSingleRow::fillable,
-        //     HiddenSingleColumn::fillable,
-        //     ...
-        // ];
-        // for tech in direct_techniques {
-        //     let res = tech(state);
-        //     if res.is_some() {
-        //         let (r, c, num) = res;
-        //         self.state.fill_cell(r, c, num);
-        //         self.tmp_score += 1.5;
-        //         if self.search(solution_cnt_needed) {
-        //             return true;
-        //         }
-        //         self.state.unfill_cell(r, c);
-        //         self.tmp_score -= 1.5;
-        //         return false;
-        //     }
-        // }
+        let direct_techniques = [
+            HiddenSingleBlock::fillable,
+            HiddenSingleRow::fillable,
+            HiddenSingleColumn::fillable,
+            NakedSingle::fillable,
+        ];
 
-
-        let step = hidden_single_row(&self.state).unwrap_or(
-            hidden_single_col(&self.state).unwrap_or(
-                hidden_single_blk(&self.state)
-                    .unwrap_or(naked_single(&self.state).unwrap_or((0, 0, 0))),
-            ),
-        );
-        // 如果可以通过 hidden single 或 naked single 确定下一步填的数字
-        if step.2 > 0 {
-            let (r, c, num) = step;
-            self.state.fill_cell(r, c, num);
-            self.tmp_score += 1.5;
-            if self.search(solution_cnt_needed) {
-                return true;
+        for technique in direct_techniques {
+            let (fillable, score) = technique(&self.state);
+            if fillable.is_some() {
+                let (r, c, num) = fillable.unwrap();
+                self.state.fill_cell(r, c, num);
+                self.tmp_score += score;
+                if self.search(solution_cnt_needed) {
+                    return true;
+                }
+                self.state.unfill_cell(r, c);
+                self.tmp_score -= score;
+                return false;
             }
-            self.state.unfill_cell(r, c);
-            self.tmp_score -= 1.5;
-            return false;
         }
 
-        let ((r1, c1), rem1, (r2, c2), rem2, num1, _) =
-            hidden_pair_row(&self.state).unwrap_or(hidden_pair_col(&self.state).unwrap_or(
-                hidden_pair_blk(&self.state).unwrap_or(((0, 0), vec![], (0, 0), vec![], 0, 0)),
-            ));
-        // 如果可以通过 hidden pair 删除一些候选数字
-        if num1 > 0 {
-            for num in &rem1 {
-                self.state.remove_candidate_of_cell(r1, c1, *num);
+        let reducing_techniques = [
+            Pointing::reducible,
+            NakedPairRow::reducible,
+            NakedPairColumn::reducible,
+            NakedPairBlock::reducible,
+            HiddenPairRow::reducible,
+            HiddenPairColumn::reducible,
+            HiddenPairBlock::reducible,
+        ];
+
+        for technique in reducing_techniques {
+            let (reducible, score) = technique(&self.state);
+            if reducible.is_some() {
+                let rems = reducible.unwrap();
+                for (cells, nums) in &rems {
+                    for (r, c) in cells {
+                        for num in nums {
+                            self.state.remove_candidate_of_cell(*r, *c, *num);
+                        }
+                    }
+                }
+                self.tmp_score += score;
+                if self.search(solution_cnt_needed) {
+                    return true;
+                }
+                for (cells, nums) in &rems {
+                    for (r, c) in cells {
+                        for num in nums {
+                            self.state.add_candidate_of_cell(*r, *c, *num);
+                        }
+                    }
+                }
+                self.tmp_score -= score;
+                return false;
             }
-            for num in &rem2 {
-                self.state.remove_candidate_of_cell(r2, c2, *num);
-            }
-            self.tmp_score += 2.7;
-            if self.search(solution_cnt_needed) {
-                return true;
-            }
-            for num in &rem1 {
-                self.state.add_candidate_of_cell(r1, c1, *num);
-            }
-            for num in &rem2 {
-                self.state.add_candidate_of_cell(r2, c2, *num);
-            }
-            self.tmp_score -= 2.7;
-            return false;
         }
 
-        let ((_, _), (_, _), num1, rem1, num2, rem2) =
-            naked_pair_row(&self.state).unwrap_or(naked_pair_col(&self.state).unwrap_or(
-                naked_pair_blk(&self.state).unwrap_or(((0, 0), (0, 0), 0, vec![], 0, vec![])),
-            ));
-        // 如果可以通过 naked pair 删除一些候选数字
-        if num1 > 0 {
-            for (r, c) in &rem1 {
-                self.state.remove_candidate_of_cell(*r, *c, num1);
-            }
-            for (r, c) in &rem2 {
-                self.state.remove_candidate_of_cell(*r, *c, num2);
-            }
-            self.tmp_score += 3.0;
-            if self.search(solution_cnt_needed) {
-                return true;
-            }
-            for (r, c) in &rem1 {
-                self.state.add_candidate_of_cell(*r, *c, num1);
-            }
-            for (r, c) in &rem2 {
-                self.state.add_candidate_of_cell(*r, *c, num2);
-            }
-            self.tmp_score -= 3.0;
-            return false;
-        }
-
-        let res_pointing = pointing(&self.state);
-        // 如果可以通过 pointing 删除一些候选数字
-        if res_pointing.is_some() {
-            let (_, num, rems) = res_pointing.unwrap();
-            for (r, c) in &rems {
-                self.state.remove_candidate_of_cell(*r, *c, num);
-            }
-            self.tmp_score += 2.2;
-            if self.search(solution_cnt_needed) {
-                return true;
-            }
-            for (r, c) in &rems {
-                self.state.add_candidate_of_cell(*r, *c, num);
-            }
-            self.tmp_score -= 2.2;
-            return false;
-        }
-
-        // TODO: Claiming,  Triplet, X-Wing, Swordfish, XY-Wing, XYZ-Wing
+        // TODO: Claiming, Triplet, Fish
 
         // 实在不行，找一个候选数字最少的空随便猜一个填上
         let mut min_candidate_cnt = 10;
@@ -208,7 +162,7 @@ where
             state: T::from(puzzle),
             solution_cnt: 0,
             tmp_score: 0.0,
-            score: 0.0
+            score: 0.0,
         }
     }
 }
