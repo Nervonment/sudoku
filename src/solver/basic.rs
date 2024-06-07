@@ -8,7 +8,7 @@ use crate::{
 
 use super::{Grader, Solver};
 
-pub struct NaiveSolver<T>
+pub struct BasicSolver<T>
 where
     T: State
         + Fillable
@@ -23,7 +23,7 @@ where
     invoke_cnt: i32,
 }
 
-impl<T> NaiveSolver<T>
+impl<T> BasicSolver<T>
 where
     T: State
         + Fillable
@@ -60,11 +60,39 @@ where
             return false;
         }
 
+        // 实在不行，找一个候选数字最少的空随便猜一个填上
+        let mut min_candidate_cnt = 10;
+        let mut grid = (0, 0);
+        'outer: for r in 0..9 {
+            for c in 0..9 {
+                if self.state.is_cell_empty(r, c) {
+                    if self.state.candidate_cnt_of_cell(r, c) == 2 {
+                        grid = (r, c);
+                        break 'outer;
+                    }
+                    if self.state.candidate_cnt_of_cell(r, c) < min_candidate_cnt {
+                        grid = (r, c);
+                        min_candidate_cnt = self.state.candidate_cnt_of_cell(r, c);
+                    }
+                }
+            }
+        }
+        let (r, c) = grid;
+        for num in 1..=9 {
+            if self.state.is_candidate_of(r, c, num) {
+                self.state.fill_cell(r, c, num);
+                if self.search(solution_cnt_needed) {
+                    return true;
+                }
+                self.state.unfill_cell(r, c);
+            }
+        }
+
         false
     }
 }
 
-impl<T> From<Grid> for NaiveSolver<T>
+impl<T> From<Grid> for BasicSolver<T>
 where
     T: State
         + Fillable
@@ -83,7 +111,7 @@ where
     }
 }
 
-impl<T> Solver for NaiveSolver<T>
+impl<T> Solver for BasicSolver<T>
 where
     T: State
         + Fillable
@@ -113,7 +141,7 @@ where
     }
 }
 
-impl<T> Grader<i32> for NaiveSolver<T>
+impl<T> Grader<i32> for BasicSolver<T>
 where
     T: State
         + Fillable

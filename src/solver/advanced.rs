@@ -4,8 +4,7 @@ use crate::{
         TrackingCellCountOfCandidate,
     },
     techniques::{
-        hidden_pair_blk, hidden_pair_col, hidden_pair_row, hidden_single_blk, hidden_single_col,
-        hidden_single_row, naked_pair_blk, naked_pair_col, naked_pair_row, naked_single, pointing,
+        hidden_pair_blk, hidden_pair_col, hidden_pair_row, hidden_single_blk, hidden_single_col, hidden_single_row, naked_pair_blk, naked_pair_col, naked_pair_row, naked_single, pointing, singles::{HiddenSingleColumn, HiddenSingleRow}, Direct, Technique
     }, Grid,
 };
 
@@ -47,6 +46,27 @@ where
             self.score = self.tmp_score;
             return solution_cnt_needed <= self.solution_cnt;
         }
+
+        // let direct_techniques = [
+        //     HiddenSingleRow::fillable,
+        //     HiddenSingleColumn::fillable,
+        //     ...
+        // ];
+        // for tech in direct_techniques {
+        //     let res = tech(state);
+        //     if res.is_some() {
+        //         let (r, c, num) = res;
+        //         self.state.fill_cell(r, c, num);
+        //         self.tmp_score += 1.5;
+        //         if self.search(solution_cnt_needed) {
+        //             return true;
+        //         }
+        //         self.state.unfill_cell(r, c);
+        //         self.tmp_score -= 1.5;
+        //         return false;
+        //     }
+        // }
+
 
         let step = hidden_single_row(&self.state).unwrap_or(
             hidden_single_col(&self.state).unwrap_or(

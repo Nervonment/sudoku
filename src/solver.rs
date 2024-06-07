@@ -28,5 +28,5 @@ fn next_blank(mut row: usize, mut col: usize, state: &impl State) -> Option<(usi
 }
 
 pub mod advanced;
-pub mod naive;
+pub mod basic;
 pub mod stochastic;

@@ -1,3 +1,35 @@
+pub trait Technique {
+    fn check(state: &FullState) -> Self;
+    // TODO
+    // fn decription() -> String;
+}
+
+pub trait Direct: Technique {
+    fn fillable(&self) -> Option<(usize, usize, i8)>;
+}
+
+pub trait ReducingCandidates: Technique {
+    // 如果返回值为 Some(removes)，
+    // 对于 removes 中的任意元素 (cells, nums)，
+    // cells 与 nums 中元素的笛卡尔积为所有的移除对，
+    // 即：可以从 cells 中的任意格的候选数中移除 nums 中的任意数
+    fn reducible(&self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>;
+}
+
+#[derive(Clone, Copy)]
+pub enum House {
+    Row(usize),
+    Column(usize),
+    Block(usize),
+}
+
+pub mod hidden_subsets;
+pub mod locked_candidates;
+pub mod naked_subsets;
+pub mod singles;
+
+use crate::state::full_state::FullState;
+
 use super::{
     state::{
         State, TrackingCandidateCountOfCell, TrackingCandidates, TrackingCellCountOfCandidate,
@@ -7,164 +39,6 @@ use super::{
 
 // TODO: Add the Direct variants for hidden_pair and pointing
 
-fn hidden_single<T, F1, F2>(
-    state: &T,
-    cell_cnt_of_candidate: F1,
-    coord_transform: F2,
-) -> Option<(usize, usize, i8)>
-where
-    T: State + TrackingCandidates,
-    F1: Fn(&T, usize, i8) -> i8,
-    F2: Fn(usize, usize) -> (usize, usize),
-{
-    for i in 0..9 {
-        for num in 1..=9 {
-            if cell_cnt_of_candidate(state, i, num) == 1 {
-                let j = (0..9)
-                    .filter(|j: &usize| {
-                        let (r, c) = coord_transform(i, *j);
-                        state.is_cell_empty(r, c) && state.is_candidate_of(r, c, num)
-                    })
-                    .next()
-                    .unwrap();
-                let (r, c) = coord_transform(i, j);
-                return Some((r, c, num));
-            }
-        }
-    }
-    None
-}
-
-pub fn hidden_single_row(
-    state: &(impl State + TrackingCandidates + TrackingCellCountOfCandidate),
-) -> Option<(usize, usize, i8)> {
-    hidden_single(
-        state,
-        |p, r, num| p.cell_cnt_of_candidate_in_row(r, num),
-        |r, c| (r, c),
-    )
-}
-
-pub fn hidden_single_col(
-    state: &(impl State + TrackingCandidates + TrackingCellCountOfCandidate),
-) -> Option<(usize, usize, i8)> {
-    hidden_single(
-        state,
-        |p, c, num| p.cell_cnt_of_candidate_in_col(c, num),
-        |c, r| (r, c),
-    )
-}
-
-pub fn hidden_single_blk(
-    state: &(impl State + TrackingCandidates + TrackingCellCountOfCandidate),
-) -> Option<(usize, usize, i8)> {
-    hidden_single(
-        state,
-        |p, b, num| p.cell_cnt_of_candidate_in_blk(b, num),
-        block_idx_2_coord,
-    )
-}
-
-pub fn naked_single(
-    state: &(impl State + TrackingCandidates + TrackingCandidateCountOfCell),
-) -> Option<(usize, usize, i8)> {
-    for r in 0..9 {
-        for c in 0..9 {
-            if state.is_cell_empty(r, c) && state.candidate_cnt_of_cell(r, c) == 1 {
-                let num = (1..=9)
-                    .filter(|num| state.is_candidate_of(r, c, *num))
-                    .next()
-                    .unwrap();
-                return Some((r, c, num));
-            }
-        }
-    }
-    None
-}
-
-fn hidden_pair<T, F1, F2>(
-    state: &T,
-    cell_cnt_of_candidate: F1,
-    coord_transform: F2,
-) -> Option<((usize, usize), Vec<i8>, (usize, usize), Vec<i8>, i8, i8)>
-where
-    T: State + TrackingCandidates,
-    F1: Fn(&T, usize, i8) -> i8,
-    F2: Fn(usize, usize) -> (usize, usize),
-{
-    for i in 0..9 {
-        let nums: Vec<i8> = (1..=9)
-            .filter(|num| cell_cnt_of_candidate(state, i, *num) == 2)
-            .collect();
-        for i1 in 0..nums.len() {
-            for i2 in 0..i1 {
-                let num1 = nums[i1];
-                let num2 = nums[i2];
-                if (0..9).all(|j| {
-                    let (r, c) = coord_transform(i, j);
-                    !state.is_cell_empty(r, c)
-                        || state.is_candidate_of(r, c, num1) == state.is_candidate_of(r, c, num2)
-                }) {
-                    let mut jiter = (0..9).filter(|j| {
-                        let (r, c) = coord_transform(i, *j);
-                        state.is_cell_empty(r, c) && state.is_candidate_of(r, c, nums[i1])
-                    });
-                    let j1 = jiter.next().unwrap();
-                    let j2 = jiter.next().unwrap();
-                    let (r1, c1) = coord_transform(i, j1);
-                    let (r2, c2) = coord_transform(i, j2);
-                    let removes_1: Vec<i8> = (1..=9)
-                        .filter(|n| *n != num1 && *n != num2 && state.is_candidate_of(r1, c1, *n))
-                        .collect();
-                    let removes_2: Vec<i8> = (1..=9)
-                        .filter(|n| *n != num1 && *n != num2 && state.is_candidate_of(r2, c2, *n))
-                        .collect();
-                    if !removes_1.is_empty() || !removes_2.is_empty() {
-                        return Some((
-                            (r1, c1),
-                            removes_1,
-                            (r2, c2),
-                            removes_2,
-                            nums[i1],
-                            nums[i2],
-                        ));
-                    }
-                }
-            }
-        }
-    }
-    None
-}
-
-pub fn hidden_pair_row(
-    state: &(impl State + TrackingCandidates + TrackingCellCountOfCandidate),
-) -> Option<((usize, usize), Vec<i8>, (usize, usize), Vec<i8>, i8, i8)> {
-    hidden_pair(
-        state,
-        |p, r, num| p.cell_cnt_of_candidate_in_row(r, num),
-        |r, c| (r, c),
-    )
-}
-
-pub fn hidden_pair_col(
-    state: &(impl State + TrackingCandidates + TrackingCellCountOfCandidate),
-) -> Option<((usize, usize), Vec<i8>, (usize, usize), Vec<i8>, i8, i8)> {
-    hidden_pair(
-        state,
-        |p, c, num| p.cell_cnt_of_candidate_in_col(c, num),
-        |c, r| (r, c),
-    )
-}
-
-pub fn hidden_pair_blk(
-    state: &(impl State + TrackingCandidates + TrackingCellCountOfCandidate),
-) -> Option<((usize, usize), Vec<i8>, (usize, usize), Vec<i8>, i8, i8)> {
-    hidden_pair(
-        state,
-        |p, b, num| p.cell_cnt_of_candidate_in_blk(b, num),
-        block_idx_2_coord,
-    )
-}
 
 fn naked_pair<T, F>(
     state: &T,
@@ -267,53 +141,4 @@ pub fn naked_pair_blk(
     Vec<(usize, usize)>,
 )> {
     naked_pair(state, block_idx_2_coord)
-}
-
-pub fn pointing(
-    state: &(impl State + TrackingCandidates + TrackingCellCountOfCandidate),
-) -> Option<(usize, i8, Vec<(usize, usize)>)> {
-    for b in 0..9 {
-        for num in 1..=9 {
-            let cnt = state.cell_cnt_of_candidate_in_blk(b, num);
-            if cnt < 1 || cnt > 3 {
-                continue;
-            }
-            let mut bidxs = (0..9).filter(|bidx| {
-                let (r, c) = block_idx_2_coord(b, *bidx);
-                state.is_cell_empty(r, c) && state.is_candidate_of(r, c, num)
-            });
-            let bidx0 = bidxs.next().unwrap();
-            // 在同一行
-            if bidxs.clone().all(|bidx| bidx / 3 == bidx0 / 3) {
-                let r = block_idx_2_coord(b, bidx0).0;
-                let removes: Vec<(usize, usize)> = (0..9)
-                    .filter(|c| {
-                        coord_2_block(r, *c) != b
-                            && state.is_cell_empty(r, *c)
-                            && state.is_candidate_of(r, *c, num)
-                    })
-                    .map(|c| (r, c))
-                    .collect();
-                if !removes.is_empty() {
-                    return Some((b, num, removes));
-                }
-            }
-            // 在同一列
-            else if bidxs.all(|bidx| bidx % 3 == bidx0 % 3) {
-                let c = block_idx_2_coord(b, bidx0).1;
-                let removes: Vec<(usize, usize)> = (0..9)
-                    .filter(|r| {
-                        coord_2_block(*r, c) != b
-                            && state.is_cell_empty(*r, c)
-                            && state.is_candidate_of(*r, c, num)
-                    })
-                    .map(|r| (r, c))
-                    .collect();
-                if !removes.is_empty() {
-                    return Some((b, num, removes));
-                }
-            }
-        }
-    }
-    None
 }
