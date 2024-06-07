@@ -5,7 +5,7 @@ use crate::{
     },
     techniques::{
         hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
-        locked_candidates::Pointing,
+        locked_candidates::{Claiming, Pointing},
         naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
         singles::{HiddenSingleBlock, HiddenSingleColumn, HiddenSingleRow, NakedSingle},
         Direct, ReducingCandidates,
@@ -76,6 +76,7 @@ where
 
         let reducing_techniques = [
             Pointing::reducible,
+            Claiming::reducible,
             NakedPairRow::reducible,
             NakedPairColumn::reducible,
             NakedPairBlock::reducible,
@@ -83,6 +84,7 @@ where
             HiddenPairColumn::reducible,
             HiddenPairBlock::reducible,
         ];
+        // TODO: Triplet, Fish
 
         for technique in reducing_techniques {
             let (reducible, score) = technique(&self.state);
@@ -110,8 +112,6 @@ where
                 return false;
             }
         }
-
-        // TODO: Claiming, Triplet, Fish
 
         // 实在不行，找一个候选数字最少的空随便猜一个填上
         let mut min_candidate_cnt = 10;

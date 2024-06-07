@@ -18,7 +18,7 @@ fn random_sudoku_puzzle_normal() -> Grid {
 }
 
 #[test]
-fn sudoku_puzzle() {
+fn sudoku_state() {
     for _ in 0..100 {
         let puzzle = random_sudoku_puzzle_normal();
         let mut puzzle = FullState::from(puzzle);
