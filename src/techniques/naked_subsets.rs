@@ -36,7 +36,8 @@ where
                 let (r2, c2) = coord_transform(i, j2);
                 if (1..=9).all(|num| {
                     state.is_candidate_of(r1, c1, num) == state.is_candidate_of(r2, c2, num)
-                }) { // 如果两个格子候选数相同
+                }) {
+                    // 如果两个格子候选数相同
                     let mut num_iter = (1..=9).filter(|num| state.is_candidate_of(r1, c1, *num));
                     let num1 = num_iter.next().unwrap();
                     let num2 = num_iter.next().unwrap();
@@ -95,7 +96,7 @@ where
             rem_num_2: res.4,
         }))
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         3.0
     }
 }
@@ -129,7 +130,7 @@ where
             rem_num_2: res.4,
         }))
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         3.0
     }
 }
@@ -165,7 +166,7 @@ where
             }),
         )
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         3.0
     }
 }

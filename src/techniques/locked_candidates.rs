@@ -75,7 +75,7 @@ where
         }
         Pointing(None)
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         2.6
     }
 }
@@ -172,7 +172,7 @@ where
         }
         Claiming(None)
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         2.8
     }
 }

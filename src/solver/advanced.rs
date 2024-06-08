@@ -63,9 +63,9 @@ where
         ];
 
         for technique in direct_techniques {
-            let (fillable, score) = technique(&self.state);
+            let fillable = technique(&self.state);
             if fillable.is_some() {
-                let (r, c, num) = fillable.unwrap();
+                let (r, c, num, score) = fillable.unwrap();
                 self.state.fill_cell(r, c, num);
                 self.tmp_score += score;
                 if self.search(solution_cnt_needed) {
@@ -90,9 +90,9 @@ where
         // TODO: Triplet, Fish
 
         for technique in reducing_techniques {
-            let (reducible, score) = technique(&self.state);
+            let reducible = technique(&self.state);
             if reducible.is_some() {
-                let rems = reducible.unwrap();
+                let (rems, score) = reducible.unwrap();
                 for (cells, nums) in &rems {
                     for (r, c) in cells {
                         for num in nums {

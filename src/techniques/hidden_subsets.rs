@@ -100,7 +100,7 @@ where
             }),
         )
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         3.4
     }
 }
@@ -141,7 +141,7 @@ where
             }),
         )
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         3.4
     }
 }
@@ -181,7 +181,7 @@ where
             }),
         )
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         3.4
     }
 }

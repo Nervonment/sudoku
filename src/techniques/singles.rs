@@ -59,7 +59,7 @@ where
             }),
         )
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         1.5
     }
 }
@@ -91,7 +91,7 @@ where
             }),
         )
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         1.5
     }
 }
@@ -123,7 +123,7 @@ where
             }),
         )
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         1.2
     }
 }
@@ -163,7 +163,7 @@ where
             .map(|res| NakedSingleInfo(res)),
         )
     }
-    fn score() -> f32 {
+    fn score(&self) -> f32 {
         2.3
     }
 }
