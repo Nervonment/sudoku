@@ -24,6 +24,30 @@ pub struct FullState {
     )>,
 }
 
+impl FullState {
+    pub fn new(grid: Grid, candidates: [[[bool; 10]; 9]; 9]) -> Self {
+        let mut res = Self {
+            grid,
+            candidates: [[[true; 10]; 9]; 9],
+            candidate_cnt: [[9; 9]; 9],
+            cell_cnt_for_candidate_in_row: [[9; 10]; 9],
+            cell_cnt_for_candidate_in_col: [[9; 10]; 9],
+            cell_cnt_for_candidate_in_blk: [[9; 10]; 9],
+            history: vec![],
+        };
+        for r in 0..9 {
+            for c in 0..9 {
+                for num in 1..=9 {
+                    if !candidates[r][c][num as usize] {
+                        res.remove_candidate_of_cell(r, c, num)
+                    }
+                }
+            }
+        }
+        res
+    }
+}
+
 impl From<Grid> for FullState {
     fn from(puzzle: Grid) -> Self {
         let mut res = Self {
