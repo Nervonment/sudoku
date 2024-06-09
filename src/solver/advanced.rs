@@ -178,6 +178,28 @@ where
     }
 }
 
+impl<T> From<T> for AdvancedSolver<T>
+where
+    T: State
+        + Fillable
+        + CandidatesSettable
+        + TrackingCandidates
+        + TrackingCandidateCountOfCell
+        + TrackingCellCountOfCandidate,
+{
+    fn from(state: T) -> Self {
+        Self {
+            puzzle: state.grid(),
+            state,
+            solution_cnt: 0,
+            tmp_score: 0.0,
+            tmp_max_tech_score: 1.0,
+            score: 0.0,
+            max_tech_score: 0.0,
+        }
+    }
+}
+
 impl<T> Solver for AdvancedSolver<T>
 where
     T: State
