@@ -3,7 +3,7 @@ use crate::{
     utils::block_idx_2_coord,
 };
 
-use super::{House, ReducingCandidates, Technique};
+use super::{House, ReducingCandidates, ReducingCandidatesOption, Technique};
 
 fn naked_pair<T, F>(
     state: &T,
@@ -100,13 +100,13 @@ where
         3.0
     }
 }
-impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for NakedPairRow {
-    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+impl Into<Option<ReducingCandidatesOption>> for NakedPairRow {
+    fn into(self) -> Option<ReducingCandidatesOption> {
         self.0.map(|info| {
-            vec![
+            ReducingCandidatesOption(vec![
                 (info.rem_cells_1, vec![info.rem_num_1]),
                 (info.rem_cells_2, vec![info.rem_num_2]),
-            ]
+            ])
         })
     }
 }
@@ -134,13 +134,13 @@ where
         3.0
     }
 }
-impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for NakedPairColumn {
-    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+impl Into<Option<ReducingCandidatesOption>> for NakedPairColumn {
+    fn into(self) -> Option<ReducingCandidatesOption> {
         self.0.map(|info| {
-            vec![
+            ReducingCandidatesOption(vec![
                 (info.rem_cells_1, vec![info.rem_num_1]),
                 (info.rem_cells_2, vec![info.rem_num_2]),
-            ]
+            ])
         })
     }
 }
@@ -170,13 +170,13 @@ where
         3.0
     }
 }
-impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for NakedPairBlock {
-    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+impl Into<Option<ReducingCandidatesOption>> for NakedPairBlock {
+    fn into(self) -> Option<ReducingCandidatesOption> {
         self.0.map(|info| {
-            vec![
+            ReducingCandidatesOption(vec![
                 (info.rem_cells_1, vec![info.rem_num_1]),
                 (info.rem_cells_2, vec![info.rem_num_2]),
-            ]
+            ])
         })
     }
 }

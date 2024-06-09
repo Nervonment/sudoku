@@ -3,7 +3,7 @@ use crate::{
     utils::block_idx_2_coord,
 };
 
-use super::{House, ReducingCandidates, Technique};
+use super::{House, ReducingCandidates, ReducingCandidatesOption, Technique};
 
 fn hidden_pair<T, F1, F2>(
     state: &T,
@@ -104,13 +104,13 @@ where
         3.4
     }
 }
-impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for HiddenPairRow {
-    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+impl Into<Option<ReducingCandidatesOption>> for HiddenPairRow {
+    fn into(self) -> Option<ReducingCandidatesOption> {
         self.0.map(|info| {
-            vec![
+            ReducingCandidatesOption(vec![
                 (vec![info.rem_cell_1], info.rem_nums_1),
                 (vec![info.rem_cell_2], info.rem_nums_2),
-            ]
+            ])
         })
     }
 }
@@ -145,13 +145,13 @@ where
         3.4
     }
 }
-impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for HiddenPairColumn {
-    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+impl Into<Option<ReducingCandidatesOption>> for HiddenPairColumn {
+    fn into(self) -> Option<ReducingCandidatesOption> {
         self.0.map(|info| {
-            vec![
+            ReducingCandidatesOption(vec![
                 (vec![info.rem_cell_1], info.rem_nums_1),
                 (vec![info.rem_cell_2], info.rem_nums_2),
-            ]
+            ])
         })
     }
 }
@@ -185,13 +185,13 @@ where
         3.4
     }
 }
-impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for HiddenPairBlock {
-    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+impl Into<Option<ReducingCandidatesOption>> for HiddenPairBlock {
+    fn into(self) -> Option<ReducingCandidatesOption> {
         self.0.map(|info| {
-            vec![
+            ReducingCandidatesOption(vec![
                 (vec![info.rem_cell_1], info.rem_nums_1),
                 (vec![info.rem_cell_2], info.rem_nums_2),
-            ]
+            ])
         })
     }
 }

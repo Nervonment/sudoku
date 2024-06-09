@@ -8,7 +8,7 @@ use crate::{
         locked_candidates::{Claiming, Pointing},
         naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
         singles::{HiddenSingleBlock, HiddenSingleColumn, HiddenSingleRow, NakedSingle},
-        Direct, ReducingCandidates,
+        Direct, DirectOption, ReducingCandidates, ReducingCandidatesOption,
     },
     Grid,
 };
@@ -56,16 +56,16 @@ where
         }
 
         let direct_techniques = [
-            HiddenSingleBlock::fillable,
-            HiddenSingleRow::fillable,
-            HiddenSingleColumn::fillable,
-            NakedSingle::fillable,
+            HiddenSingleBlock::get_option_and_score,
+            HiddenSingleRow::get_option_and_score,
+            HiddenSingleColumn::get_option_and_score,
+            NakedSingle::get_option_and_score,
         ];
 
         for technique in direct_techniques {
             let fillable = technique(&self.state);
             if fillable.is_some() {
-                let (r, c, num, score) = fillable.unwrap();
+                let (DirectOption(r, c, num), score) = fillable.unwrap();
                 self.state.fill_cell(r, c, num);
                 self.tmp_score += score;
                 if self.search(solution_cnt_needed) {
@@ -92,7 +92,7 @@ where
         for technique in reducing_techniques {
             let reducible = technique(&self.state);
             if reducible.is_some() {
-                let (rems, score) = reducible.unwrap();
+                let (ReducingCandidatesOption(rems), score) = reducible.unwrap();
                 for (cells, nums) in &rems {
                     for (r, c) in cells {
                         for num in nums {

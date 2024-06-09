@@ -5,7 +5,7 @@ use crate::{
     utils::block_idx_2_coord,
 };
 
-use super::{Direct, House, Technique};
+use super::{Direct, DirectOption, House, Technique};
 
 fn hidden_single<T, F1, F2>(
     state: &T,
@@ -63,9 +63,10 @@ where
         1.5
     }
 }
-impl Into<Option<(usize, usize, i8)>> for HiddenSingleRow {
-    fn into(self) -> Option<(usize, usize, i8)> {
-        self.0.map(|info| (info.fillable))
+impl Into<Option<DirectOption>> for HiddenSingleRow {
+    fn into(self) -> Option<DirectOption> {
+        self.0
+            .map(|info| DirectOption(info.fillable.0, info.fillable.1, info.fillable.2))
     }
 }
 impl<T> Direct<T> for HiddenSingleRow where
@@ -95,9 +96,10 @@ where
         1.5
     }
 }
-impl Into<Option<(usize, usize, i8)>> for HiddenSingleColumn {
-    fn into(self) -> Option<(usize, usize, i8)> {
-        self.0.map(|info| (info.fillable))
+impl Into<Option<DirectOption>> for HiddenSingleColumn {
+    fn into(self) -> Option<DirectOption> {
+        self.0
+            .map(|info| DirectOption(info.fillable.0, info.fillable.1, info.fillable.2))
     }
 }
 impl<T> Direct<T> for HiddenSingleColumn where
@@ -127,9 +129,10 @@ where
         1.2
     }
 }
-impl Into<Option<(usize, usize, i8)>> for HiddenSingleBlock {
-    fn into(self) -> Option<(usize, usize, i8)> {
-        self.0.map(|info| (info.fillable))
+impl Into<Option<DirectOption>> for HiddenSingleBlock {
+    fn into(self) -> Option<DirectOption> {
+        self.0
+            .map(|info| DirectOption(info.fillable.0, info.fillable.1, info.fillable.2))
     }
 }
 impl<T> Direct<T> for HiddenSingleBlock where
@@ -167,9 +170,10 @@ where
         2.3
     }
 }
-impl Into<Option<(usize, usize, i8)>> for NakedSingle {
-    fn into(self) -> Option<(usize, usize, i8)> {
-        self.0.map(|info| info.0)
+impl Into<Option<DirectOption>> for NakedSingle {
+    fn into(self) -> Option<DirectOption> {
+        self.0
+            .map(|info| DirectOption(info.0 .0, info.0 .1, info.0 .2))
     }
 }
 impl<T> Direct<T> for NakedSingle where T: State + TrackingCandidates + TrackingCandidateCountOfCell {}

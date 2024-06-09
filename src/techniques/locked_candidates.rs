@@ -3,7 +3,7 @@ use crate::{
     utils::{block_idx_2_coord, coord_2_block},
 };
 
-use super::{House, ReducingCandidates, Technique};
+use super::{House, ReducingCandidates, ReducingCandidatesOption, Technique};
 
 #[derive(Debug)]
 pub struct PointingInfo {
@@ -79,10 +79,10 @@ where
         2.6
     }
 }
-impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for Pointing {
-    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+impl Into<Option<ReducingCandidatesOption>> for Pointing {
+    fn into(self) -> Option<ReducingCandidatesOption> {
         self.0
-            .map(|info| (vec![(info.rem_cells, vec![info.rem_num])]))
+            .map(|info| ReducingCandidatesOption(vec![(info.rem_cells, vec![info.rem_num])]))
     }
 }
 impl<T> ReducingCandidates<T> for Pointing where
@@ -176,10 +176,10 @@ where
         2.8
     }
 }
-impl Into<Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>>> for Claiming {
-    fn into(self) -> Option<Vec<(Vec<(usize, usize)>, Vec<i8>)>> {
+impl Into<Option<ReducingCandidatesOption>> for Claiming {
+    fn into(self) -> Option<ReducingCandidatesOption> {
         self.0
-            .map(|info| (vec![(info.rem_cells, vec![info.rem_num])]))
+            .map(|info| ReducingCandidatesOption(vec![(info.rem_cells, vec![info.rem_num])]))
     }
 }
 impl<T> ReducingCandidates<T> for Claiming where
