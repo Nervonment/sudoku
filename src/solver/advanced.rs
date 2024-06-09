@@ -78,14 +78,14 @@ where
         }
 
         let reducing_techniques = [
-            Pointing::reducible,
-            Claiming::reducible,
-            NakedPairRow::reducible,
-            NakedPairColumn::reducible,
-            NakedPairBlock::reducible,
-            HiddenPairRow::reducible,
-            HiddenPairColumn::reducible,
-            HiddenPairBlock::reducible,
+            Pointing::get_option_and_score,
+            Claiming::get_option_and_score,
+            NakedPairRow::get_option_and_score,
+            NakedPairColumn::get_option_and_score,
+            NakedPairBlock::get_option_and_score,
+            HiddenPairRow::get_option_and_score,
+            HiddenPairColumn::get_option_and_score,
+            HiddenPairBlock::get_option_and_score,
         ];
         // TODO: Triplet, Fish
 

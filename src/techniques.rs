@@ -14,9 +14,6 @@ pub trait Direct<T>: Technique<T> + Into<Option<DirectOption>>
 where
     T: State,
 {
-    fn to_option(self) -> Option<DirectOption> {
-        self.into()
-    }
     fn get_option_and_score(state: &T) -> Option<(DirectOption, f32)> {
         let res = Self::check(state);
         let score = res.score();
@@ -30,14 +27,11 @@ pub trait ReducingCandidates<T>: Technique<T> + Into<Option<ReducingCandidatesOp
 where
     T: State,
 {
-    fn to_option(self) -> Option<ReducingCandidatesOption> {
-        self.into()
-    }
     // 如果返回值为 Some(ReducingCandidatesOption(removes), score)，
     // 对于 removes 中的任意元素 (cells, nums)，
     // cells 与 nums 中元素的笛卡尔积为所有的移除对，
     // 即：可以从 cells 中的任意格的候选数中移除 nums 中的任意数
-    fn reducible(state: &T) -> Option<(ReducingCandidatesOption, f32)> {
+    fn get_option_and_score(state: &T) -> Option<(ReducingCandidatesOption, f32)> {
         let res = Self::check(state);
         let score = res.score();
         res.into().map(|v| (v, score))

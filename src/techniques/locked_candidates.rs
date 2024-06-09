@@ -5,7 +5,7 @@ use crate::{
 
 use super::{House, ReducingCandidates, ReducingCandidatesOption, Technique};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct PointingInfo {
     pub block: usize,
     pub rem_house: House,
@@ -90,7 +90,7 @@ impl<T> ReducingCandidates<T> for Pointing where
 {
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ClaimingInfo {
     pub house: House,
     pub rem_block: usize,
