@@ -22,11 +22,12 @@ where
         + CandidatesSettable
         + TrackingCandidates
         + TrackingCandidateCountOfCell
-        + TrackingCellCountOfCandidate,
+        + TrackingCellCountOfCandidate
+        + Clone,
 {
-    puzzle: Grid,
     state: T,
     solution_cnt: u32,
+    tmp_state: T,
     tmp_score: f32,
     tmp_max_tech_score: f32,
     score: f32,
@@ -40,11 +41,12 @@ where
         + CandidatesSettable
         + TrackingCandidates
         + TrackingCandidateCountOfCell
-        + TrackingCellCountOfCandidate,
+        + TrackingCellCountOfCandidate
+        + Clone,
 {
     fn init_search(&mut self) {
         self.solution_cnt = 0;
-        self.state = T::from(self.puzzle);
+        self.state = self.tmp_state.clone();
     }
 
     fn search(&mut self, solution_cnt_needed: u32) -> bool {
@@ -163,13 +165,15 @@ where
         + CandidatesSettable
         + TrackingCandidates
         + TrackingCandidateCountOfCell
-        + TrackingCellCountOfCandidate,
+        + TrackingCellCountOfCandidate
+        + Clone,
 {
     fn from(puzzle: Grid) -> Self {
+        let state = T::from(puzzle);
         Self {
-            puzzle,
-            state: T::from(puzzle),
+            state: state.clone(),
             solution_cnt: 0,
+            tmp_state: state,
             tmp_score: 0.0,
             tmp_max_tech_score: 1.0,
             score: 0.0,
@@ -185,13 +189,14 @@ where
         + CandidatesSettable
         + TrackingCandidates
         + TrackingCandidateCountOfCell
-        + TrackingCellCountOfCandidate,
+        + TrackingCellCountOfCandidate
+        + Clone,
 {
     fn from(state: T) -> Self {
         Self {
-            puzzle: state.grid(),
-            state,
+            state: state.clone(),
             solution_cnt: 0,
+            tmp_state: state,
             tmp_score: 0.0,
             tmp_max_tech_score: 1.0,
             score: 0.0,
@@ -207,7 +212,8 @@ where
         + CandidatesSettable
         + TrackingCandidates
         + TrackingCandidateCountOfCell
-        + TrackingCellCountOfCandidate,
+        + TrackingCellCountOfCandidate
+        + Clone,
 {
     fn any_solution(&mut self) -> Option<Grid> {
         self.init_search();
@@ -237,7 +243,8 @@ where
         + CandidatesSettable
         + TrackingCandidates
         + TrackingCandidateCountOfCell
-        + TrackingCellCountOfCandidate,
+        + TrackingCellCountOfCandidate
+        + Clone,
 {
     fn difficulty(&self) -> f32 {
         self.score * self.max_tech_score.ln().max(1.0)
