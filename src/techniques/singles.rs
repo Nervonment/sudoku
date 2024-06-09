@@ -118,7 +118,7 @@ where
                 block_idx_2_coord,
             )
             .map(|res| HiddenSingleInfo {
-                house: House::Column(res.3),
+                house: House::Block(res.3),
                 fillable: (res.0, res.1, res.2),
             }),
         )
