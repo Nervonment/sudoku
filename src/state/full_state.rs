@@ -8,6 +8,7 @@ use super::{
     TrackingCellCountOfCandidate,
 };
 
+#[derive(Clone)]
 pub struct FullState {
     grid: Grid,
     candidates: [[[bool; 10]; 9]; 9],

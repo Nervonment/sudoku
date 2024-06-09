@@ -2,6 +2,7 @@ use crate::{utils::coord_2_block, Grid};
 
 use super::{Fillable, State, TrackingCandidates};
 
+#[derive(Clone)]
 pub struct SimpleState {
     grid: Grid,    // 棋盘
     row: [[bool; 10]; 9],   // row[r][num] = 第r行是否存在数num
