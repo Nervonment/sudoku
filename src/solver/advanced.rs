@@ -4,11 +4,14 @@ use crate::{
         TrackingCandidates, TrackingCellCountOfCandidate,
     },
     techniques::{
-        hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
-        locked_candidates::{Claiming, Pointing},
-        naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
+        // hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
+        // locked_candidates::{Claiming, Pointing},
+        // naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
         singles::{HiddenSingleBlock, HiddenSingleColumn, HiddenSingleRow, NakedSingle},
-        Direct, DirectOption, ReducingCandidates, ReducingCandidatesOption,
+        Direct,
+        DirectOption,
+        ReducingCandidates,
+        ReducingCandidatesOption,
     },
     Grid,
 };
@@ -57,17 +60,18 @@ where
             return solution_cnt_needed <= self.solution_cnt;
         }
 
-        let direct_techniques = [
-            HiddenSingleBlock::get_option_and_score,
-            HiddenSingleRow::get_option_and_score,
-            HiddenSingleColumn::get_option_and_score,
-            NakedSingle::get_option_and_score,
+        let direct_techniques: [&mut dyn Direct<T>; 4] = [
+            &mut HiddenSingleBlock::default(),
+            &mut HiddenSingleRow::default(),
+            &mut HiddenSingleColumn::default(),
+            &mut NakedSingle::default(),
         ];
 
         for technique in direct_techniques {
-            let fillable = technique(&self.state);
-            if fillable.is_some() {
-                let (DirectOption(r, c, num), score) = fillable.unwrap();
+            technique.analyze(&self.state);
+            if technique.appliable() {
+                let DirectOption(r, c, num) = technique.option().unwrap();
+                let score = technique.score().unwrap();
                 self.state.fill_cell(r, c, num);
                 self.tmp_score += score;
                 if self.search(solution_cnt_needed) {
@@ -79,47 +83,47 @@ where
             }
         }
 
-        let reducing_techniques = [
-            Pointing::get_option_and_score,
-            Claiming::get_option_and_score,
-            NakedPairRow::get_option_and_score,
-            NakedPairColumn::get_option_and_score,
-            NakedPairBlock::get_option_and_score,
-            HiddenPairRow::get_option_and_score,
-            HiddenPairColumn::get_option_and_score,
-            HiddenPairBlock::get_option_and_score,
-        ];
-        // TODO: Triplet, Fish
+        // let reducing_techniques = [
+        //     Pointing::get_option_and_score,
+        //     Claiming::get_option_and_score,
+        //     NakedPairRow::get_option_and_score,
+        //     NakedPairColumn::get_option_and_score,
+        //     NakedPairBlock::get_option_and_score,
+        //     HiddenPairRow::get_option_and_score,
+        //     HiddenPairColumn::get_option_and_score,
+        //     HiddenPairBlock::get_option_and_score,
+        // ];
+        // // TODO: Triplet, Fish
 
-        for technique in reducing_techniques {
-            let reducible = technique(&self.state);
-            if reducible.is_some() {
-                let (ReducingCandidatesOption(rems), score) = reducible.unwrap();
-                for (cells, nums) in &rems {
-                    for (r, c) in cells {
-                        for num in nums {
-                            self.state.remove_candidate_of_cell(*r, *c, *num);
-                        }
-                    }
-                }
-                self.tmp_score += score;
-                let tmp_max_tech_score = self.tmp_max_tech_score;
-                self.tmp_max_tech_score = score.max(self.tmp_max_tech_score);
-                if self.search(solution_cnt_needed) {
-                    return true;
-                }
-                for (cells, nums) in &rems {
-                    for (r, c) in cells {
-                        for num in nums {
-                            self.state.add_candidate_of_cell(*r, *c, *num);
-                        }
-                    }
-                }
-                self.tmp_score -= score;
-                self.tmp_max_tech_score = tmp_max_tech_score;
-                return false;
-            }
-        }
+        // for technique in reducing_techniques {
+        //     let reducible = technique(&self.state);
+        //     if reducible.is_some() {
+        //         let (ReducingCandidatesOption(rems), score) = reducible.unwrap();
+        //         for (cells, nums) in &rems {
+        //             for (r, c) in cells {
+        //                 for num in nums {
+        //                     self.state.remove_candidate_of_cell(*r, *c, *num);
+        //                 }
+        //             }
+        //         }
+        //         self.tmp_score += score;
+        //         let tmp_max_tech_score = self.tmp_max_tech_score;
+        //         self.tmp_max_tech_score = score.max(self.tmp_max_tech_score);
+        //         if self.search(solution_cnt_needed) {
+        //             return true;
+        //         }
+        //         for (cells, nums) in &rems {
+        //             for (r, c) in cells {
+        //                 for num in nums {
+        //                     self.state.add_candidate_of_cell(*r, *c, *num);
+        //                 }
+        //             }
+        //         }
+        //         self.tmp_score -= score;
+        //         self.tmp_max_tech_score = tmp_max_tech_score;
+        //         return false;
+        //     }
+        // }
 
         // 实在不行，找一个候选数字最少的空随便猜一个填上
         let mut min_candidate_cnt = 10;
