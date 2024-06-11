@@ -1,7 +1,7 @@
 use rand::random;
 
 use crate::{
-    generator::random_sudoku_puzzle_normal,
+    generator::random_sudoku_puzzle_easy,
     judge::judge_sudoku,
     solver::{advanced::AdvancedSolver, stochastic::StochasticSolver, Solver},
     state::{
@@ -14,7 +14,7 @@ use crate::{
 #[test]
 fn sudoku_state() {
     for _ in 0..100 {
-        let puzzle = random_sudoku_puzzle_normal();
+        let puzzle = random_sudoku_puzzle_easy();
         let mut puzzle = FullState::from(puzzle);
 
         let mut moves = vec![];
@@ -174,7 +174,7 @@ fn sudoku_state() {
 #[test]
 fn sudoku_solver() {
     for _ in 0..100 {
-        let puzzle = random_sudoku_puzzle_normal();
+        let puzzle = random_sudoku_puzzle_easy();
         let mut solver1 = StochasticSolver::<SimpleState>::from(puzzle);
         let mut solver2 = AdvancedSolver::<FullState>::from(puzzle);
         assert!(solver1.have_unique_solution());
