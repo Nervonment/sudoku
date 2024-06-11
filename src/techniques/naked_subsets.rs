@@ -81,28 +81,38 @@ pub struct NakedPairInfo {
     pub rem_num_2: i8,
 }
 
+#[derive(Default)]
 pub struct NakedPairRow(pub Option<NakedPairInfo>);
 impl<T> Technique<T> for NakedPairRow
 where
     T: State + TrackingCandidates + TrackingCandidateCountOfCell,
 {
-    fn check(state: &T) -> Self {
-        Self(naked_pair(state, |r, c| (r, c)).map(|res| NakedPairInfo {
+    fn analyze(&mut self, state: &T) {
+        self.0 = naked_pair(state, |r, c| (r, c)).map(|res| NakedPairInfo {
             house: House::Row(res.6),
             cells: [res.0, res.1],
             rem_cells_1: res.3,
             rem_num_1: res.2,
             rem_cells_2: res.5,
             rem_num_2: res.4,
-        }))
+        })
     }
-    fn score(&self) -> f32 {
-        3.0
+    fn appliable(&self) -> bool {
+        self.0.is_some()
+    }
+    fn score(&self) -> Option<f32> {
+        if self.0.is_some() {
+            return Some(3.0);
+        }
+        None
     }
 }
-impl Into<Option<ReducingCandidatesOption>> for NakedPairRow {
-    fn into(self) -> Option<ReducingCandidatesOption> {
-        self.0.map(|info| {
+impl<T> ReducingCandidates<T> for NakedPairRow
+where
+    T: State + TrackingCandidates + TrackingCandidateCountOfCell,
+{
+    fn option(&self) -> Option<ReducingCandidatesOption> {
+        self.0.clone().map(|info| {
             ReducingCandidatesOption(vec![
                 (info.rem_cells_1, vec![info.rem_num_1]),
                 (info.rem_cells_2, vec![info.rem_num_2]),
@@ -110,33 +120,39 @@ impl Into<Option<ReducingCandidatesOption>> for NakedPairRow {
         })
     }
 }
-impl<T> ReducingCandidates<T> for NakedPairRow where
-    T: State + TrackingCandidates + TrackingCandidateCountOfCell
-{
-}
 
+#[derive(Default)]
 pub struct NakedPairColumn(pub Option<NakedPairInfo>);
 impl<T> Technique<T> for NakedPairColumn
 where
     T: State + TrackingCandidates + TrackingCandidateCountOfCell,
 {
-    fn check(state: &T) -> Self {
-        Self(naked_pair(state, |c, r| (r, c)).map(|res| NakedPairInfo {
+    fn analyze(&mut self, state: &T) {
+        self.0 = naked_pair(state, |c, r| (r, c)).map(|res| NakedPairInfo {
             house: House::Column(res.6),
             cells: [res.0, res.1],
             rem_cells_1: res.3,
             rem_num_1: res.2,
             rem_cells_2: res.5,
             rem_num_2: res.4,
-        }))
+        })
     }
-    fn score(&self) -> f32 {
-        3.0
+    fn appliable(&self) -> bool {
+        self.0.is_some()
+    }
+    fn score(&self) -> Option<f32> {
+        if self.0.is_some() {
+            return Some(3.0);
+        }
+        None
     }
 }
-impl Into<Option<ReducingCandidatesOption>> for NakedPairColumn {
-    fn into(self) -> Option<ReducingCandidatesOption> {
-        self.0.map(|info| {
+impl<T> ReducingCandidates<T> for NakedPairColumn
+where
+    T: State + TrackingCandidates + TrackingCandidateCountOfCell,
+{
+    fn option(&self) -> Option<ReducingCandidatesOption> {
+        self.0.clone().map(|info| {
             ReducingCandidatesOption(vec![
                 (info.rem_cells_1, vec![info.rem_num_1]),
                 (info.rem_cells_2, vec![info.rem_num_2]),
@@ -144,43 +160,43 @@ impl Into<Option<ReducingCandidatesOption>> for NakedPairColumn {
         })
     }
 }
-impl<T> ReducingCandidates<T> for NakedPairColumn where
-    T: State + TrackingCandidates + TrackingCandidateCountOfCell
-{
-}
 
+#[derive(Default)]
 pub struct NakedPairBlock(pub Option<NakedPairInfo>);
 impl<T> Technique<T> for NakedPairBlock
 where
     T: State + TrackingCandidates + TrackingCandidateCountOfCell,
 {
-    fn check(state: &T) -> Self {
-        Self(
-            naked_pair(state, block_idx_2_coord).map(|res| NakedPairInfo {
-                house: House::Block(res.6),
-                cells: [res.0, res.1],
-                rem_cells_1: res.3,
-                rem_num_1: res.2,
-                rem_cells_2: res.5,
-                rem_num_2: res.4,
-            }),
-        )
+    fn analyze(&mut self, state: &T) {
+        self.0 = naked_pair(state, block_idx_2_coord).map(|res| NakedPairInfo {
+            house: House::Block(res.6),
+            cells: [res.0, res.1],
+            rem_cells_1: res.3,
+            rem_num_1: res.2,
+            rem_cells_2: res.5,
+            rem_num_2: res.4,
+        })
     }
-    fn score(&self) -> f32 {
-        3.0
+    fn appliable(&self) -> bool {
+        self.0.is_some()
+    }
+    fn score(&self) -> Option<f32> {
+        if self.0.is_some() {
+            return Some(3.0);
+        }
+        None
     }
 }
-impl Into<Option<ReducingCandidatesOption>> for NakedPairBlock {
-    fn into(self) -> Option<ReducingCandidatesOption> {
-        self.0.map(|info| {
+impl<T> ReducingCandidates<T> for NakedPairBlock
+where
+    T: State + TrackingCandidates + TrackingCandidateCountOfCell,
+{
+    fn option(&self) -> Option<ReducingCandidatesOption> {
+        self.0.clone().map(|info| {
             ReducingCandidatesOption(vec![
                 (info.rem_cells_1, vec![info.rem_num_1]),
                 (info.rem_cells_2, vec![info.rem_num_2]),
             ])
         })
     }
-}
-impl<T> ReducingCandidates<T> for NakedPairBlock where
-    T: State + TrackingCandidates + TrackingCandidateCountOfCell
-{
 }

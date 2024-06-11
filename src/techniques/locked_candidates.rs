@@ -12,12 +12,14 @@ pub struct PointingInfo {
     pub rem_num: i8,
     pub rem_cells: Vec<(usize, usize)>,
 }
+
+#[derive(Default)]
 pub struct Pointing(pub Option<PointingInfo>);
 impl<T> Technique<T> for Pointing
 where
     T: State + TrackingCandidates + TrackingCellCountOfCandidate,
 {
-    fn check(state: &T) -> Self {
+    fn analyze(&mut self, state: &T) {
         for b in 0..9 {
             for num in 1..=9 {
                 let cnt = state.cell_cnt_of_candidate_in_blk(b, num);
@@ -42,12 +44,12 @@ where
                         .map(|c| (r, c))
                         .collect();
                     if !removes.is_empty() {
-                        return Pointing(Some(PointingInfo {
+                        self.0 = Some(PointingInfo {
                             block: b,
                             rem_house: House::Row(r),
                             rem_num: num,
                             rem_cells: removes,
-                        }));
+                        });
                     }
                 }
                 // 在同一列
@@ -63,31 +65,36 @@ where
                         .map(|r| (r, c))
                         .collect();
                     if !removes.is_empty() {
-                        return Pointing(Some(PointingInfo {
+                        self.0 = Some(PointingInfo {
                             block: b,
                             rem_house: House::Column(c),
                             rem_num: num,
                             rem_cells: removes,
-                        }));
+                        });
                     }
                 }
             }
         }
-        Pointing(None)
     }
-    fn score(&self) -> f32 {
-        2.6
+    fn appliable(&self) -> bool {
+        self.0.is_some()
+    }
+    fn score(&self) -> Option<f32> {
+        if self.0.is_some() {
+            return Some(2.6);
+        }
+        None
     }
 }
-impl Into<Option<ReducingCandidatesOption>> for Pointing {
-    fn into(self) -> Option<ReducingCandidatesOption> {
+impl<T> ReducingCandidates<T> for Pointing
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn option(&self) -> Option<ReducingCandidatesOption> {
         self.0
+            .clone()
             .map(|info| ReducingCandidatesOption(vec![(info.rem_cells, vec![info.rem_num])]))
     }
-}
-impl<T> ReducingCandidates<T> for Pointing where
-    T: State + TrackingCandidates + TrackingCellCountOfCandidate
-{
 }
 
 #[derive(Clone, Debug)]
@@ -97,12 +104,14 @@ pub struct ClaimingInfo {
     pub rem_num: i8,
     pub rem_cells: Vec<(usize, usize)>,
 }
+
+#[derive(Default)]
 pub struct Claiming(pub Option<ClaimingInfo>);
 impl<T> Technique<T> for Claiming
 where
     T: State + TrackingCandidates + TrackingCellCountOfCandidate,
 {
-    fn check(state: &T) -> Self {
+    fn analyze(&mut self, state: &T) {
         for r in 0..9 {
             for num in 1..=9 {
                 let cnt = state.cell_cnt_of_candidate_in_row(r, num);
@@ -126,12 +135,12 @@ where
                         .map(|bidx| block_idx_2_coord(b, bidx))
                         .collect();
                     if !removes.is_empty() {
-                        return Claiming(Some(ClaimingInfo {
+                        self.0 = Some(ClaimingInfo {
                             house: House::Row(r),
                             rem_block: b,
                             rem_num: num,
                             rem_cells: removes,
-                        }));
+                        });
                     }
                 }
             }
@@ -160,29 +169,34 @@ where
                         .map(|bidx| block_idx_2_coord(b, bidx))
                         .collect();
                     if !removes.is_empty() {
-                        return Claiming(Some(ClaimingInfo {
+                        self.0 = Some(ClaimingInfo {
                             house: House::Column(c),
                             rem_block: b,
                             rem_num: num,
                             rem_cells: removes,
-                        }));
+                        });
                     }
                 }
             }
         }
-        Claiming(None)
     }
-    fn score(&self) -> f32 {
-        2.8
+    fn appliable(&self) -> bool {
+        self.0.is_some()
+    }
+    fn score(&self) -> Option<f32> {
+        if self.0.is_some() {
+            return Some(2.8);
+        }
+        None
     }
 }
-impl Into<Option<ReducingCandidatesOption>> for Claiming {
-    fn into(self) -> Option<ReducingCandidatesOption> {
+impl<T> ReducingCandidates<T> for Claiming
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn option(&self) -> Option<ReducingCandidatesOption> {
         self.0
+            .clone()
             .map(|info| ReducingCandidatesOption(vec![(info.rem_cells, vec![info.rem_num])]))
     }
-}
-impl<T> ReducingCandidates<T> for Claiming where
-    T: State + TrackingCandidates + TrackingCellCountOfCandidate
-{
 }

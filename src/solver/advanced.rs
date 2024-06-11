@@ -4,14 +4,11 @@ use crate::{
         TrackingCandidates, TrackingCellCountOfCandidate,
     },
     techniques::{
-        // hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
-        // locked_candidates::{Claiming, Pointing},
-        // naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
+        hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
+        locked_candidates::{Claiming, Pointing},
+        naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
         singles::{HiddenSingleBlock, HiddenSingleColumn, HiddenSingleRow, NakedSingle},
-        Direct,
-        DirectOption,
-        ReducingCandidates,
-        ReducingCandidatesOption,
+        Direct, DirectOption, ReducingCandidates, ReducingCandidatesOption,
     },
     Grid,
 };
@@ -83,47 +80,48 @@ where
             }
         }
 
-        // let reducing_techniques = [
-        //     Pointing::get_option_and_score,
-        //     Claiming::get_option_and_score,
-        //     NakedPairRow::get_option_and_score,
-        //     NakedPairColumn::get_option_and_score,
-        //     NakedPairBlock::get_option_and_score,
-        //     HiddenPairRow::get_option_and_score,
-        //     HiddenPairColumn::get_option_and_score,
-        //     HiddenPairBlock::get_option_and_score,
-        // ];
-        // // TODO: Triplet, Fish
+        let reducing_techniques: [&mut dyn ReducingCandidates<T>; 8] = [
+            &mut Pointing::default(),
+            &mut Claiming::default(),
+            &mut NakedPairBlock::default(),
+            &mut NakedPairRow::default(),
+            &mut NakedPairColumn::default(),
+            &mut HiddenPairBlock::default(),
+            &mut HiddenPairRow::default(),
+            &mut HiddenPairColumn::default(),
+        ];
+        // TODO: Triplet, Fish
 
-        // for technique in reducing_techniques {
-        //     let reducible = technique(&self.state);
-        //     if reducible.is_some() {
-        //         let (ReducingCandidatesOption(rems), score) = reducible.unwrap();
-        //         for (cells, nums) in &rems {
-        //             for (r, c) in cells {
-        //                 for num in nums {
-        //                     self.state.remove_candidate_of_cell(*r, *c, *num);
-        //                 }
-        //             }
-        //         }
-        //         self.tmp_score += score;
-        //         let tmp_max_tech_score = self.tmp_max_tech_score;
-        //         self.tmp_max_tech_score = score.max(self.tmp_max_tech_score);
-        //         if self.search(solution_cnt_needed) {
-        //             return true;
-        //         }
-        //         for (cells, nums) in &rems {
-        //             for (r, c) in cells {
-        //                 for num in nums {
-        //                     self.state.add_candidate_of_cell(*r, *c, *num);
-        //                 }
-        //             }
-        //         }
-        //         self.tmp_score -= score;
-        //         self.tmp_max_tech_score = tmp_max_tech_score;
-        //         return false;
-        //     }
-        // }
+        for technique in reducing_techniques {
+            technique.analyze(&self.state);
+            if technique.appliable() {
+                let ReducingCandidatesOption(rems) = technique.option().unwrap();
+                let score = technique.score().unwrap();
+                for (cells, nums) in &rems {
+                    for (r, c) in cells {
+                        for num in nums {
+                            self.state.remove_candidate_of_cell(*r, *c, *num);
+                        }
+                    }
+                }
+                self.tmp_score += score;
+                let tmp_max_tech_score = self.tmp_max_tech_score;
+                self.tmp_max_tech_score = score.max(self.tmp_max_tech_score);
+                if self.search(solution_cnt_needed) {
+                    return true;
+                }
+                for (cells, nums) in &rems {
+                    for (r, c) in cells {
+                        for num in nums {
+                            self.state.add_candidate_of_cell(*r, *c, *num);
+                        }
+                    }
+                }
+                self.tmp_score -= score;
+                self.tmp_max_tech_score = tmp_max_tech_score;
+                return false;
+            }
+        }
 
         // 实在不行，找一个候选数字最少的空随便猜一个填上
         let mut min_candidate_cnt = 10;

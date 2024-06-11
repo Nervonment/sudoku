@@ -1,21 +1,15 @@
 use rand::random;
 
 use crate::{
-    generator::random_sudoku_puzzle,
+    generator::random_sudoku_puzzle_normal,
     judge::judge_sudoku,
     solver::{advanced::AdvancedSolver, stochastic::StochasticSolver, Solver},
     state::{
         full_state::FullState, simple_state::SimpleState, CandidatesSettable, Fillable, State,
         TrackingCandidateCountOfCell, TrackingCandidates, TrackingCellCountOfCandidate,
     },
-    utils::{block_idx_2_coord, coord_2_block_idx}, Grid,
+    utils::{block_idx_2_coord, coord_2_block_idx},
 };
-
-fn random_sudoku_puzzle_normal() -> Grid {
-    random_sudoku_puzzle::<StochasticSolver<SimpleState>, AdvancedSolver<FullState>, f32>(
-        45, 60.0, 1000.0,
-    )
-}
 
 #[test]
 fn sudoku_state() {

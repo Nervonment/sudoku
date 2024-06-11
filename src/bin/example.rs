@@ -1,47 +1,65 @@
-// use sudoku::{
-//     generator::random_sudoku_puzzle_normal,
-//     solver::{advanced::AdvancedSolver, Grader, Solver},
-//     state::full_state::FullState,
-//     techniques::{
-//         hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
-//         locked_candidates::{Claiming, Pointing},
-//         naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
-//         singles::{HiddenSingleBlock, HiddenSingleColumn, HiddenSingleRow, NakedSingle},
-//         Technique,
-//     },
-// };
+use sudoku::{
+    generator::random_sudoku_puzzle_normal,
+    solver::{advanced::AdvancedSolver, Grader, Solver},
+    state::full_state::FullState,
+    techniques::{
+        hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
+        locked_candidates::{Claiming, Pointing},
+        naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
+        singles::{HiddenSingleBlock, HiddenSingleColumn, HiddenSingleRow, NakedSingle},
+        Direct, ReducingCandidates,
+    },
+};
 
-// fn main() {
-//     let grid = random_sudoku_puzzle_normal();
-//     let state = FullState::from(grid);
-//     println!("{}", grid);
-//     let res_hidden_single_row = HiddenSingleRow::check(&state).0;
-//     let res_hidden_single_col = HiddenSingleColumn::check(&state).0;
-//     let res_hidden_single_blk = HiddenSingleBlock::check(&state).0;
-//     let res_naked_single = NakedSingle::check(&state).0;
-//     let res_hidden_pair_row = HiddenPairRow::check(&state).0;
-//     let res_hidden_pair_col = HiddenPairColumn::check(&state).0;
-//     let res_hidden_pair_blk = HiddenPairBlock::check(&state).0;
-//     let res_naked_pair_row = NakedPairRow::check(&state).0;
-//     let res_naked_pair_col = NakedPairColumn::check(&state).0;
-//     let res_naked_pair_blk = NakedPairBlock::check(&state).0;
-//     let res_pointing = Pointing::check(&state).0;
-//     let res_claiming = Claiming::check(&state).0;
-//     println!("hidden single in row: {:?}", res_hidden_single_row);
-//     println!("hidden single in col: {:?}", res_hidden_single_col);
-//     println!("hidden single in blk: {:?}", res_hidden_single_blk);
-//     println!("naked single: {:?}", res_naked_single);
-//     println!("hidden pair in row: {:?}", res_hidden_pair_row);
-//     println!("hidden pair in col: {:?}", res_hidden_pair_col);
-//     println!("hidden pair in blk: {:?}", res_hidden_pair_blk);
-//     println!("naked pair in row: {:?}", res_naked_pair_row);
-//     println!("naked pair in col: {:?}", res_naked_pair_col);
-//     println!("naked pair in blk: {:?}", res_naked_pair_blk);
-//     println!("pointing: {:?}", res_pointing);
-//     println!("claiming: {:?}", res_claiming);
-//     let mut solver2 = AdvancedSolver::<FullState>::from(grid);
-//     solver2.have_unique_solution();
-//     println!("{}", solver2.difficulty());
-//     println!("{:?}", grid.0);
-// }
-fn main() {}
+fn main() {
+    let grid = random_sudoku_puzzle_normal();
+    println!("The sudoku puzzle: ");
+    println!("{}", grid);
+    println!();
+
+    let state = FullState::from(grid);
+
+    let direct_techniques: [(&mut dyn Direct<FullState>, &str); 4] = [
+        (&mut HiddenSingleBlock::default(), "HiddenSingleBlock"),
+        (&mut HiddenSingleRow::default(), "HiddenSingleRow"),
+        (&mut HiddenSingleColumn::default(), "HiddenSingleColumn"),
+        (&mut NakedSingle::default(), "NakedSingle"),
+    ];
+
+    println!("Direct techniques appliable: ");
+    for (technique, label) in direct_techniques {
+        technique.analyze(&state);
+        if technique.appliable() {
+            println!("{} - {}", label, technique.option().unwrap());
+        }
+    }
+    println!();
+
+    let reducing_techniques: [(&mut dyn ReducingCandidates<FullState>, &str); 8] = [
+        (&mut Pointing::default(), "Pointing"),
+        (&mut Claiming::default(), "Claiming"),
+        (&mut NakedPairBlock::default(), "NakedPairBlock"),
+        (&mut NakedPairRow::default(), "NakedPairRow"),
+        (&mut NakedPairColumn::default(), "NakedPairColumn"),
+        (&mut HiddenPairBlock::default(), "HiddenPairBlock"),
+        (&mut HiddenPairRow::default(), "HiddenPairRow"),
+        (&mut HiddenPairColumn::default(), "HiddenPairColumn"),
+    ];
+
+    println!("Reducing-candidates techniques appliable: ");
+    for (technique, label) in reducing_techniques {
+        technique.analyze(&state);
+        if technique.appliable() {
+            println!("{} - {}", label, technique.option().unwrap());
+        }
+    }
+    println!();
+
+    let mut solver = AdvancedSolver::<FullState>::from(grid);
+    assert!(solver.have_unique_solution());
+    println!("The difficulty of the puzzle: {}", solver.difficulty());
+    println!();
+
+    println!("The puzzle as [[i8; 9]; 9]: ");
+    println!("{:?}", grid.0);
+}
