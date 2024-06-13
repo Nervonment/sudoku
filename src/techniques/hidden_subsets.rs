@@ -79,6 +79,81 @@ pub struct HiddenPairInfo {
 }
 
 #[derive(Default)]
+pub struct HiddenPair(pub Option<HiddenPairInfo>);
+impl<T> Technique<T> for HiddenPair
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn analyze(&mut self, state: &T) {
+        self.0 = hidden_pair(
+            state,
+            |p, b, num| p.cell_cnt_of_candidate_in_blk(b, num),
+            block_idx_2_coord,
+        )
+        .map(|res| HiddenPairInfo {
+            house: House::Block(res.6),
+            nums: [res.4, res.5],
+            rem_cell_1: res.0,
+            rem_nums_1: res.1,
+            rem_cell_2: res.2,
+            rem_nums_2: res.3,
+        });
+        if self.0.is_none() {
+            self.0 = hidden_pair(
+                state,
+                |p, r, num| p.cell_cnt_of_candidate_in_row(r, num),
+                |r, c| (r, c),
+            )
+            .map(|res| HiddenPairInfo {
+                house: House::Row(res.6),
+                nums: [res.4, res.5],
+                rem_cell_1: res.0,
+                rem_nums_1: res.1,
+                rem_cell_2: res.2,
+                rem_nums_2: res.3,
+            });
+            if self.0.is_none() {
+                self.0 = hidden_pair(
+                    state,
+                    |p, c, num| p.cell_cnt_of_candidate_in_col(c, num),
+                    |r, c| (c, r),
+                )
+                .map(|res| HiddenPairInfo {
+                    house: House::Column(res.6),
+                    nums: [res.4, res.5],
+                    rem_cell_1: res.0,
+                    rem_nums_1: res.1,
+                    rem_cell_2: res.2,
+                    rem_nums_2: res.3,
+                });
+            }
+        }
+    }
+    fn appliable(&self) -> bool {
+        self.0.is_some()
+    }
+    fn score(&self) -> Option<f32> {
+        if self.0.is_some() {
+            return Some(3.4);
+        }
+        None
+    }
+}
+impl<T> ReducingCandidates<T> for HiddenPair
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn option(&self) -> Option<ReducingCandidatesOption> {
+        self.0.clone().map(|info| {
+            ReducingCandidatesOption(vec![
+                (vec![info.rem_cell_1], info.rem_nums_1),
+                (vec![info.rem_cell_2], info.rem_nums_2),
+            ])
+        })
+    }
+}
+
+#[derive(Default)]
 pub struct HiddenPairRow(pub Option<HiddenPairInfo>);
 impl<T> Technique<T> for HiddenPairRow
 where

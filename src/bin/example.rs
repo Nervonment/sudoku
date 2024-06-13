@@ -3,10 +3,12 @@ use sudoku::{
     solver::{advanced::AdvancedSolver, Grader, Solver},
     state::full_state::FullState,
     techniques::{
-        hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
+        hidden_subsets::{HiddenPair, HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
         locked_candidates::{Claiming, Pointing},
-        naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
-        singles::{HiddenSingleBlock, HiddenSingleColumn, HiddenSingleRow, NakedSingle},
+        naked_subsets::{NakedPair, NakedPairBlock, NakedPairColumn, NakedPairRow, NakedSubset},
+        singles::{
+            HiddenSingle, HiddenSingleBlock, HiddenSingleColumn, HiddenSingleRow, NakedSingle,
+        },
         Direct, ReducingCandidates,
     },
 };
@@ -19,7 +21,8 @@ fn main() {
 
     let state = FullState::from(grid);
 
-    let direct_techniques: [(&mut dyn Direct<FullState>, &str); 4] = [
+    let direct_techniques: [(&mut dyn Direct<FullState>, &str); 5] = [
+        (&mut HiddenSingle::default(), "HiddenSingle"),
         (&mut HiddenSingleBlock::default(), "HiddenSingleBlock"),
         (&mut HiddenSingleRow::default(), "HiddenSingleRow"),
         (&mut HiddenSingleColumn::default(), "HiddenSingleColumn"),
@@ -35,15 +38,18 @@ fn main() {
     }
     println!();
 
-    let reducing_techniques: [(&mut dyn ReducingCandidates<FullState>, &str); 8] = [
+    let reducing_techniques: [(&mut dyn ReducingCandidates<FullState>, &str); 11] = [
         (&mut Pointing::default(), "Pointing"),
         (&mut Claiming::default(), "Claiming"),
+        (&mut NakedPair::default(), "NakedPair"),
         (&mut NakedPairBlock::default(), "NakedPairBlock"),
         (&mut NakedPairRow::default(), "NakedPairRow"),
         (&mut NakedPairColumn::default(), "NakedPairColumn"),
+        (&mut HiddenPair::default(), "HiddenPair"),
         (&mut HiddenPairBlock::default(), "HiddenPairBlock"),
         (&mut HiddenPairRow::default(), "HiddenPairRow"),
         (&mut HiddenPairColumn::default(), "HiddenPairColumn"),
+        (&mut NakedSubset::default(), "NakedSubset"),
     ];
 
     println!("Reducing-candidates techniques appliable: ");

@@ -4,10 +4,10 @@ use crate::{
         TrackingCandidates, TrackingCellCountOfCandidate,
     },
     techniques::{
-        hidden_subsets::{HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
+        hidden_subsets::HiddenPair,
         locked_candidates::{Claiming, Pointing},
-        naked_subsets::{NakedPairBlock, NakedPairColumn, NakedPairRow},
-        singles::{HiddenSingleBlock, HiddenSingleColumn, HiddenSingleRow, NakedSingle},
+        naked_subsets::{NakedPair, NakedSubset},
+        singles::{HiddenSingle, NakedSingle},
         Direct, DirectOption, ReducingCandidates, ReducingCandidatesOption,
     },
     Grid,
@@ -57,17 +57,14 @@ where
             return solution_cnt_needed <= self.solution_cnt;
         }
 
-        let direct_techniques: [&mut dyn Direct<T>; 4] = [
-            &mut HiddenSingleBlock::default(),
-            &mut HiddenSingleRow::default(),
-            &mut HiddenSingleColumn::default(),
-            &mut NakedSingle::default(),
-        ];
+        let direct_techniques: [&mut dyn Direct<T>; 2] =
+            [&mut HiddenSingle::default(), &mut NakedSingle::default()];
 
         for technique in direct_techniques {
             technique.analyze(&self.state);
             if technique.appliable() {
                 let DirectOption(r, c, num) = technique.option().unwrap();
+                // println!("{}", DirectOption(r, c, num));
                 let score = technique.score().unwrap();
                 self.state.fill_cell(r, c, num);
                 self.tmp_score += score;
@@ -80,26 +77,25 @@ where
             }
         }
 
-        let reducing_techniques: [&mut dyn ReducingCandidates<T>; 8] = [
+        let reducing_techniques: [&mut dyn ReducingCandidates<T>; 5] = [
             &mut Pointing::default(),
             &mut Claiming::default(),
-            &mut NakedPairBlock::default(),
-            &mut NakedPairRow::default(),
-            &mut NakedPairColumn::default(),
-            &mut HiddenPairBlock::default(),
-            &mut HiddenPairRow::default(),
-            &mut HiddenPairColumn::default(),
+            &mut NakedPair::default(),
+            &mut HiddenPair::default(),
+            &mut NakedSubset::default(),
         ];
-        // TODO: Triplet, Fish
+        // TODO: Fish, Unique Rectangle
 
         for technique in reducing_techniques {
             technique.analyze(&self.state);
             if technique.appliable() {
                 let ReducingCandidatesOption(rems) = technique.option().unwrap();
+                // println!("{}", ReducingCandidatesOption(rems.clone()));
                 let score = technique.score().unwrap();
                 for (cells, nums) in &rems {
                     for (r, c) in cells {
                         for num in nums {
+                            // assert!(self.state.is_cell_empty(*r, *c));
                             self.state.remove_candidate_of_cell(*r, *c, *num);
                         }
                     }

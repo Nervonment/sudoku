@@ -14,7 +14,7 @@ fn benchmarks(c: &mut Criterion) {
         })
     });
     let mut solver = AdvancedSolver::<FullState>::from(puzzle);
-    c.bench_function("TechniquesSolver", |b| {
+    c.bench_function("AdvancedSolver", |b| {
         b.iter(|| {
             solver.any_solution();
         })

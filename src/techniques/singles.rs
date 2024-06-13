@@ -42,6 +42,62 @@ pub struct HiddenSingleInfo {
 }
 
 #[derive(Default)]
+pub struct HiddenSingle(pub Option<HiddenSingleInfo>);
+impl<T> Technique<T> for HiddenSingle
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn analyze(&mut self, state: &T) {
+        self.0 = hidden_single(
+            state,
+            |p, b, num| p.cell_cnt_of_candidate_in_blk(b, num),
+            block_idx_2_coord,
+        )
+        .map(|res| HiddenSingleInfo {
+            house: House::Block(res.3),
+            fillable: (res.0, res.1, res.2),
+        });
+        if self.0.is_none() {
+            self.0 = hidden_single(
+                state,
+                |p, r, num| p.cell_cnt_of_candidate_in_row(r, num),
+                |r, c| (r, c),
+            )
+            .map(|res| HiddenSingleInfo {
+                house: House::Row(res.3),
+                fillable: (res.0, res.1, res.2),
+            });
+            if self.0.is_none() {
+                self.0 = hidden_single(
+                    state,
+                    |p, c, num| p.cell_cnt_of_candidate_in_col(c, num),
+                    |r, c| (c, r),
+                )
+                .map(|res| HiddenSingleInfo {
+                    house: House::Column(res.3),
+                    fillable: (res.0, res.1, res.2),
+                });
+            }
+        }
+    }
+    fn appliable(&self) -> bool {
+        self.0.is_some()
+    }
+    fn score(&self) -> Option<f32> {
+        self.0.map(|_| 1.5)
+    }
+}
+impl<T> Direct<T> for HiddenSingle
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn option(&self) -> Option<DirectOption> {
+        self.0
+            .map(|info| DirectOption(info.fillable.0, info.fillable.1, info.fillable.2))
+    }
+}
+
+#[derive(Default)]
 pub struct HiddenSingleRow(pub Option<HiddenSingleInfo>);
 impl<T> Technique<T> for HiddenSingleRow
 where
