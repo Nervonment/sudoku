@@ -391,7 +391,7 @@ where
                     self.0 = naked_subset(k, state, |r, c| (c, r)).map(
                         |(house, cells, nums, removes)| NakedSubsetInfo {
                             k,
-                            house: House::Row(house),
+                            house: House::Column(house),
                             cells,
                             nums,
                             removes,
