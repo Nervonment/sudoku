@@ -376,29 +376,32 @@ where
                         removes,
                     }
                 });
-            if self.0.is_none() {
-                self.0 =
-                    naked_subset(k, state, |r, c| (r, c)).map(|(house, cells, nums, removes)| {
-                        NakedSubsetInfo {
-                            k,
-                            house: House::Row(house),
-                            cells,
-                            nums,
-                            removes,
-                        }
-                    });
-                if self.0.is_none() {
-                    self.0 = naked_subset(k, state, |r, c| (c, r)).map(
-                        |(house, cells, nums, removes)| NakedSubsetInfo {
-                            k,
-                            house: House::Column(house),
-                            cells,
-                            nums,
-                            removes,
-                        },
-                    );
-                }
+            if self.0.is_some() {
+                return;
             }
+
+            self.0 = naked_subset(k, state, |r, c| (r, c)).map(|(house, cells, nums, removes)| {
+                NakedSubsetInfo {
+                    k,
+                    house: House::Row(house),
+                    cells,
+                    nums,
+                    removes,
+                }
+            });
+            if self.0.is_some() {
+                return;
+            }
+
+            self.0 = naked_subset(k, state, |r, c| (c, r)).map(|(house, cells, nums, removes)| {
+                NakedSubsetInfo {
+                    k,
+                    house: House::Column(house),
+                    cells,
+                    nums,
+                    removes,
+                }
+            });
         }
     }
     fn appliable(&self) -> bool {
