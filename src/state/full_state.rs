@@ -39,7 +39,7 @@ impl FullState {
         for r in 0..9 {
             for c in 0..9 {
                 for num in 1..=9 {
-                    if !candidates[r][c][num as usize] {
+                    if !candidates[r][c][num as usize] || grid.0[r][c] > 0 {
                         res.remove_candidate_of_cell(r, c, num)
                     }
                 }
