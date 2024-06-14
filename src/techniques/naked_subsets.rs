@@ -402,6 +402,9 @@ where
                     removes,
                 }
             });
+            if self.0.is_some() {
+                return;
+            }
         }
     }
     fn appliable(&self) -> bool {
