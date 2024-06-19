@@ -84,7 +84,11 @@ where
         self.0.is_some()
     }
     fn score(&self) -> Option<f32> {
-        self.0.map(|_| 1.5)
+        self.0.map(|info| match info.house {
+            House::Row(_) => 1.5,
+            House::Column(_) => 1.5,
+            House::Block(_) => 1.2,
+        })
     }
 }
 impl<T> Direct<T> for HiddenSingle

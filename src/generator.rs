@@ -100,7 +100,7 @@ pub fn random_sudoku_puzzle_extraeasy() -> Grid {
     random_sudoku_puzzle::<StochasticSolver, AdvancedSolver, f32>(
         min_blank_cnt,
         0.0,
-        min_blank_cnt as f32 * 1.3,
+        min_blank_cnt as f32 * 1.25,
     )
 }
 
@@ -110,8 +110,8 @@ pub fn random_sudoku_puzzle_easy() -> Grid {
     let min_blank_cnt = 45 + random::<i32>() % 10;
     random_sudoku_puzzle::<StochasticSolver, AdvancedSolver, f32>(
         min_blank_cnt,
-        min_blank_cnt as f32 * 1.3,
-        min_blank_cnt as f32 * 1.7,
+        min_blank_cnt as f32 * 1.2,
+        min_blank_cnt as f32 * 1.5,
     )
 }
 
@@ -121,7 +121,7 @@ pub fn random_sudoku_puzzle_easy() -> Grid {
 pub fn random_sudoku_puzzle_normal() -> Grid {
     random_sudoku_puzzle::<StochasticSolver, AdvancedSolver, f32>(
         55,
-        55.0 * 1.7,
+        55.0 * 1.5,
         55.0 * 2.0 * 3.4f32.ln(),
     )
 }

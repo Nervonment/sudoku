@@ -1,7 +1,7 @@
 use rand::random;
 
 use crate::{
-    generator::random_sudoku_puzzle_easy,
+    generator::{random_sudoku_puzzle_easy, random_sudoku_puzzle_extraeasy, random_sudoku_puzzle_extrahard, random_sudoku_puzzle_hard, random_sudoku_puzzle_normal, random_sudoku_puzzle_ultimate},
     judge::judge_sudoku,
     solver::{advanced::AdvancedSolver, stochastic::StochasticSolver, Solver},
     state::{
@@ -170,6 +170,21 @@ fn sudoku_state() {
 //         assert_ne!(res_hidden_pair_row, res_hidden_pair_row_1);
 //     }
 // }
+#[test]
+fn generate_sudoku() {
+    println!("generating extraeasy puzzle");
+    random_sudoku_puzzle_extraeasy();
+    println!("generating easy puzzle");
+    random_sudoku_puzzle_easy();
+    println!("generating normal puzzle");
+    random_sudoku_puzzle_normal();
+    println!("generating hard puzzle");
+    random_sudoku_puzzle_hard();
+    println!("generating extrahard puzzle");
+    random_sudoku_puzzle_extrahard();
+    println!("generating ultimate puzzle");
+    random_sudoku_puzzle_ultimate();
+}
 
 #[test]
 fn sudoku_solver() {
