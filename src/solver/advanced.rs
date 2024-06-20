@@ -4,7 +4,7 @@ use crate::{
         TrackingCandidates, TrackingCellCountOfCandidate,
     },
     techniques::{
-        fish::fish,
+        fish::XWing,
         hidden_subsets::HiddenPair,
         locked_candidates::{Claiming, Pointing},
         naked_subsets::{NakedPair, NakedSubset},
@@ -78,12 +78,13 @@ where
             }
         }
 
-        let reducing_techniques: [&mut dyn ReducingCandidates<T>; 5] = [
+        let reducing_techniques: [&mut dyn ReducingCandidates<T>; 6] = [
             &mut Pointing::default(),
             &mut Claiming::default(),
             &mut NakedPair::default(),
             &mut HiddenPair::default(),
             &mut NakedSubset::default(),
+            &mut XWing::default(),
         ];
         // TODO: Fish, Unique Rectangle
 
@@ -119,12 +120,6 @@ where
                 return false;
             }
         }
-
-        
-        if fish(&self.state, 2, 2, 0, 0, 0, 2, 0) {
-            println!("{}", self.state.grid());
-        }
-
 
         // 实在不行，找一个候选数字最少的空随便猜一个填上
         let mut min_candidate_cnt = 10;

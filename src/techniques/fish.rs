@@ -1,13 +1,13 @@
+use itertools::Itertools;
+
 use crate::{
-    state::{
-        State, TrackingCandidateCountOfCell, TrackingCandidates, TrackingCellCountOfCandidate,
-    },
-    utils::{block_idx_2_coord, count_one},
+    state::{State, TrackingCandidates, TrackingCellCountOfCandidate},
+    utils::block_idx_2_coord,
 };
 
-use super::{House, Technique};
+use super::{House, ReducingCandidates, ReducingCandidatesOption, Technique};
 
-fn overlap_region(
+pub fn overlap_region(
     (h1, h_idx1): (usize, usize),
     (h2, h_idx2): (usize, usize),
 ) -> Vec<(usize, usize)> {
@@ -40,7 +40,7 @@ fn overlap_region(
                 }
             }
             2 => {
-                if h_idx2 % 3 == h_idx1 % 3 {
+                if h_idx2 % 3 == h_idx1 / 3 {
                     (0..3).map(|r0| (r0 + h_idx2 / 3 * 3, h_idx1)).collect()
                 } else {
                     vec![]
@@ -63,24 +63,23 @@ fn overlap_region(
     }
 }
 
-pub fn fish<T>(
+pub fn fish<
+    T,
+    const BASE_ROW_COUNT: usize,
+    const BASE_COL_COUNT: usize,
+    const BASE_BLK_COUNT: usize,
+    const COVER_ROW_COUNT: usize,
+    const COVER_COL_COUNT: usize,
+    const COVER_BLK_COUNT: usize,
+>(
     state: &T,
-    size: usize,
-    base_row_count: usize,
-    base_col_count: usize,
-    base_blk_count: usize,
-    cover_row_count: usize,
-    cover_col_count: usize,
-    cover_blk_count: usize,
-) -> 
-bool
-// Option<FishInfo>
+) -> Option<FishInfo>
 where
     T: State + TrackingCandidates + TrackingCellCountOfCandidate,
 {
-    let row_count = base_row_count + cover_row_count;
-    let col_count = base_col_count + cover_col_count;
-    let blk_count = base_blk_count + cover_blk_count;
+    let row_count: usize = BASE_ROW_COUNT + COVER_ROW_COUNT;
+    let col_count: usize = BASE_COL_COUNT + COVER_COL_COUNT;
+    let blk_count: usize = BASE_BLK_COUNT + COVER_BLK_COUNT;
 
     let coord_transforms = [|r, c| (r, c), |c, r| (r, c), block_idx_2_coord];
     let cell_cnt_of_candidate: [&dyn Fn(&T, usize, i8) -> i8; 3] = [
@@ -89,158 +88,108 @@ where
         &TrackingCellCountOfCandidate::cell_cnt_of_candidate_in_blk,
     ];
 
-    const TWO_TO_9: usize = 1 << 9;
     for num in 1..=9 {
-        for rows_bitmap in 0..TWO_TO_9 {
-            if count_one(rows_bitmap) == row_count {
-                for cols_bitmap in 0..TWO_TO_9 {
-                    if count_one(cols_bitmap) == col_count {
-                        for blks_bitmap in 0..TWO_TO_9 {
-                            if count_one(blks_bitmap) == blk_count {
-                                for base_rows_bitmap in 0..TWO_TO_9 {
-                                    if (base_rows_bitmap & !rows_bitmap) == 0
-                                        && count_one(base_rows_bitmap) == base_row_count
-                                    {
-                                        let cover_rows_bitmap = rows_bitmap & !base_rows_bitmap;
-                                        assert!(count_one(cover_rows_bitmap) == cover_row_count);
-                                        for base_cols_bitmap in 0..TWO_TO_9 {
-                                            if (base_cols_bitmap & !cols_bitmap) == 0
-                                                && count_one(base_cols_bitmap) == base_col_count
-                                            {
-                                                let cover_cols_bitmap =
-                                                    cols_bitmap & !base_cols_bitmap;
-                                                assert!(
-                                                    count_one(cover_cols_bitmap) == cover_col_count
-                                                );
-                                                'outer: for base_blks_bitmap in 0..TWO_TO_9 {
-                                                    if (base_blks_bitmap & !blks_bitmap) == 0
-                                                        && count_one(base_blks_bitmap)
-                                                            == base_blk_count
-                                                    {
-                                                        let cover_blks_bitmap =
-                                                            blks_bitmap & !base_blks_bitmap;
-                                                        assert!(
-                                                            count_one(cover_blks_bitmap)
-                                                                == cover_blk_count
-                                                        );
+        for rows in (0..9).combinations(row_count) {
+            for cols in (0..9).combinations(col_count) {
+                for blks in (0..9).combinations(blk_count) {
+                    for base_rows in rows.iter().combinations(BASE_ROW_COUNT) {
+                        let cover_rows = rows.iter().filter_map(|r| {
+                            if base_rows.iter().any(|r1| **r1 == *r) {
+                                Some((0, *r))
+                            } else {
+                                None
+                            }
+                        });
+                        for base_cols in cols.iter().combinations(BASE_COL_COUNT) {
+                            let cover_cols = cols.iter().filter_map(|c| {
+                                if base_cols.iter().any(|c1| **c1 == *c) {
+                                    Some((1, *c))
+                                } else {
+                                    None
+                                }
+                            });
+                            'outer: for base_blks in blks.iter().combinations(BASE_BLK_COUNT) {
+                                let cover_blks = blks.iter().filter_map(|b| {
+                                    if base_blks.iter().any(|b1| **b1 == *b) {
+                                        Some((2, *b))
+                                    } else {
+                                        None
+                                    }
+                                });
 
-                                                        let base_houses: Vec<(usize, usize)> = (0
-                                                            ..9)
-                                                            .filter_map(|r| {
-                                                                if (1 << r) & base_rows_bitmap != 0
-                                                                {
-                                                                    Some((0, r))
-                                                                } else {
-                                                                    None
-                                                                }
-                                                            })
-                                                            .chain((0..9).filter_map(|c| {
-                                                                if (1 << c) & base_cols_bitmap != 0
-                                                                {
-                                                                    Some((1, c))
-                                                                } else {
-                                                                    None
-                                                                }
-                                                            }))
-                                                            .chain((0..9).filter_map(|b| {
-                                                                if (1 << b) & base_blks_bitmap != 0
-                                                                {
-                                                                    Some((2, b))
-                                                                } else {
-                                                                    None
-                                                                }
-                                                            }))
-                                                            .collect();
-                                                        let cover_houses: Vec<(usize, usize)> = (0
-                                                            ..9)
-                                                            .filter_map(|r| {
-                                                                if (1 << r) & cover_rows_bitmap != 0
-                                                                {
-                                                                    Some((0, r))
-                                                                } else {
-                                                                    None
-                                                                }
-                                                            })
-                                                            .chain((0..9).filter_map(|c| {
-                                                                if (1 << c) & cover_cols_bitmap != 0
-                                                                {
-                                                                    Some((1, c))
-                                                                } else {
-                                                                    None
-                                                                }
-                                                            }))
-                                                            .chain((0..9).filter_map(|b| {
-                                                                if (1 << b) & cover_blks_bitmap != 0
-                                                                {
-                                                                    Some((2, b))
-                                                                } else {
-                                                                    None
-                                                                }
-                                                            }))
-                                                            .collect();
+                                let base_houses = base_rows
+                                    .iter()
+                                    .map(|r| (0, **r))
+                                    .chain(base_cols.iter().map(|c| (1, **c)))
+                                    .chain(base_blks.iter().map(|b| (2, **b)));
+                                let cover_houses = cover_rows
+                                    .clone()
+                                    .chain(cover_cols.clone())
+                                    .chain(cover_blks);
 
-                                                        for cover_house in &cover_houses {
-                                                            if cell_cnt_of_candidate[cover_house.0](
-                                                                state,
-                                                                cover_house.1,
-                                                                num,
-                                                            ) > 0
-                                                            {
-                                                                break 'outer;
-                                                            }
-                                                        }
-                                                        for base_house in &base_houses {
-                                                            if cell_cnt_of_candidate[base_house.0](
-                                                                state,
-                                                                base_house.1,
-                                                                num,
-                                                            ) == 0
-                                                            {
-                                                                break 'outer;
-                                                            }
-                                                        }
+                                for house in cover_houses.clone().chain(base_houses.clone()) {
+                                    if cell_cnt_of_candidate[house.0](state, house.1, num) == 0 {
+                                        continue 'outer;
+                                    }
+                                }
 
-                                                        for base_house in &base_houses {
-                                                            let region: Vec<(usize, usize)> =
-                                                                cover_houses
-                                                                    .iter()
-                                                                    .flat_map(|cover_house| {
-                                                                        overlap_region(
-                                                                            *base_house,
-                                                                            *cover_house,
-                                                                        )
-                                                                    })
-                                                                    .collect();
-                                                            for idx_in_h in 0..9 {
-                                                                let coord = coord_transforms
-                                                                    [base_house.0](
-                                                                    base_house.1,
-                                                                    idx_in_h,
-                                                                );
-                                                                if state.is_candidate_of(
-                                                                    coord.0, coord.1, num,
-                                                                ) && region
-                                                                    .iter()
-                                                                    .find(|coord1| **coord1 == coord)
-                                                                    == None
-                                                                {
-                                                                    break 'outer;
-                                                                }
-                                                            }
-                                                        }
+                                let overlap = base_houses.clone().flat_map(|base_house| {
+                                    cover_houses.clone().flat_map(move |cover_house| {
+                                        overlap_region(base_house, cover_house)
+                                    })
+                                });
 
-                                                        println!("-------------------");
-                                                        println!("base houses:");
-                                                        println!("{:?}", base_houses);
-                                                        println!("cover houses:");
-                                                        println!("{:?}", cover_houses);
-                                                        return true;
-                                                    }
-                                                }
-                                            }
+                                for base_house in base_houses.clone() {
+                                    for idx_in_h in 0..9 {
+                                        let (r, c) =
+                                            coord_transforms[base_house.0](base_house.1, idx_in_h);
+                                        if state.is_cell_empty(r, c)
+                                            && state.is_candidate_of(r, c, num)
+                                            && !overlap.clone().any(|coord| coord == (r, c))
+                                        {
+                                            continue 'outer;
                                         }
                                     }
                                 }
+
+                                let remove: Vec<(usize, usize)> = cover_houses
+                                    .clone()
+                                    .flat_map(|cover_house| {
+                                        let mut overlap = overlap.clone();
+                                        (0..9).filter_map(move |idx_in_h| {
+                                            let (r, c) = coord_transforms[cover_house.0](
+                                                cover_house.1,
+                                                idx_in_h,
+                                            );
+                                            if state.is_cell_empty(r, c)
+                                                && state.is_candidate_of(r, c, num)
+                                                && !overlap.any(|coord| coord == (r, c))
+                                            {
+                                                Some((r, c))
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                    })
+                                    .collect();
+
+                                if remove.is_empty() {
+                                    continue 'outer;
+                                }
+
+                                let to_house = |(h, h_idx): (usize, usize)| match h {
+                                    0 => House::Row(h_idx),
+                                    1 => House::Column(h_idx),
+                                    _ => House::Block(h_idx),
+                                };
+
+                                return Some(FishInfo {
+                                    size: BASE_ROW_COUNT + BASE_COL_COUNT + BASE_BLK_COUNT,
+                                    base_set: base_houses.map(to_house).collect(),
+                                    cover_set: cover_houses.map(to_house).collect(),
+                                    candidate: num,
+                                    rem_cells: remove,
+                                });
                             }
                         }
                     }
@@ -249,30 +198,312 @@ where
         }
     }
 
-    false
+    None
+}
+
+pub fn basic_fish<
+    T,
+    const BASE_ROW_COUNT: usize,
+    const BASE_COL_COUNT: usize,
+    const COVER_ROW_COUNT: usize,
+    const COVER_COL_COUNT: usize,
+>(
+    state: &T,
+) -> Option<FishInfo>
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    let row_count: usize = BASE_ROW_COUNT + COVER_ROW_COUNT;
+    let col_count: usize = BASE_COL_COUNT + COVER_COL_COUNT;
+
+    let coord_transforms = [|r, c| (r, c), |c, r| (r, c)];
+    let cell_cnt_of_candidate: [&dyn Fn(&T, usize, i8) -> i8; 2] = [
+        &TrackingCellCountOfCandidate::cell_cnt_of_candidate_in_row,
+        &TrackingCellCountOfCandidate::cell_cnt_of_candidate_in_col,
+    ];
+
+    for num in 1..=9 {
+        for rows in (0..9).combinations(row_count) {
+            for cols in (0..9).combinations(col_count) {
+                for base_rows in rows.iter().combinations(BASE_ROW_COUNT) {
+                    let cover_rows = rows.iter().filter_map(|r| {
+                        if base_rows.iter().any(|r1| **r1 == *r) {
+                            Some((0, *r))
+                        } else {
+                            None
+                        }
+                    });
+                    'outer: for base_cols in cols.iter().combinations(BASE_COL_COUNT) {
+                        let cover_cols = cols.iter().filter_map(|c| {
+                            if base_cols.iter().any(|c1| **c1 == *c) {
+                                Some((1, *c))
+                            } else {
+                                None
+                            }
+                        });
+
+                        let base_houses = base_rows
+                            .iter()
+                            .map(|r| (0, **r))
+                            .chain(base_cols.iter().map(|c| (1, **c)));
+                        let cover_houses = cover_rows.clone().chain(cover_cols);
+
+                        for house in cover_houses.clone().chain(base_houses.clone()) {
+                            if cell_cnt_of_candidate[house.0](state, house.1, num) == 0 {
+                                continue 'outer;
+                            }
+                        }
+
+                        let overlap = base_houses.clone().flat_map(|base_house| {
+                            cover_houses.clone().flat_map(move |cover_house| {
+                                overlap_region(base_house, cover_house)
+                            })
+                        });
+
+                        for base_house in base_houses.clone() {
+                            for idx_in_h in 0..9 {
+                                let (r, c) = coord_transforms[base_house.0](base_house.1, idx_in_h);
+                                if state.is_cell_empty(r, c)
+                                    && state.is_candidate_of(r, c, num)
+                                    && !overlap.clone().any(|coord| coord == (r, c))
+                                {
+                                    continue 'outer;
+                                }
+                            }
+                        }
+
+                        let remove: Vec<(usize, usize)> = cover_houses
+                            .clone()
+                            .flat_map(|cover_house| {
+                                let mut overlap = overlap.clone();
+                                (0..9).filter_map(move |idx_in_h| {
+                                    let (r, c) =
+                                        coord_transforms[cover_house.0](cover_house.1, idx_in_h);
+                                    if state.is_cell_empty(r, c)
+                                        && state.is_candidate_of(r, c, num)
+                                        && !overlap.any(|coord| coord == (r, c))
+                                    {
+                                        Some((r, c))
+                                    } else {
+                                        None
+                                    }
+                                })
+                            })
+                            .collect();
+
+                        if remove.is_empty() {
+                            continue 'outer;
+                        }
+
+                        let to_house = |(h, h_idx): (usize, usize)| match h {
+                            0 => House::Row(h_idx),
+                            1 => House::Column(h_idx),
+                            _ => House::Block(h_idx),
+                        };
+
+                        return Some(FishInfo {
+                            size: BASE_ROW_COUNT + BASE_COL_COUNT,
+                            base_set: base_houses.map(to_house).collect(),
+                            cover_set: cover_houses.map(to_house).collect(),
+                            candidate: num,
+                            rem_cells: remove,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    None
+}
+
+pub fn basic_fish_row_base<T>(
+    state: &T,
+    size: usize
+) -> Option<FishInfo>
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    for num in 1..=9 {
+        for base_rows in (0..9).combinations(size) {
+            'outer: for cover_cols in (0..9).combinations(size) {
+                for r in &base_rows {
+                    if state.cell_cnt_of_candidate_in_row(*r, num) == 0 {
+                        continue 'outer;
+                    }
+                }
+                for c in &cover_cols {
+                    if state.cell_cnt_of_candidate_in_col(*c, num) == 0 {
+                        continue 'outer;
+                    }
+                }
+
+                let overlap = base_rows.iter().flat_map(|r| {
+                    cover_cols
+                        .iter()
+                        .flat_map(move |c| overlap_region((0, *r), (1, *c)))
+                });
+
+                for r in base_rows.iter() {
+                    for c in 0..9 {
+                        if state.is_cell_empty(*r, c)
+                            && state.is_candidate_of(*r, c, num)
+                            && !overlap.clone().any(|coord| coord == (*r, c))
+                        {
+                            continue 'outer;
+                        }
+                    }
+                }
+
+                let remove: Vec<(usize, usize)> = cover_cols
+                    .iter()
+                    .flat_map(|c| {
+                        let mut overlap = overlap.clone();
+                        (0..9).filter_map(move |r| {
+                            if state.is_cell_empty(r, *c)
+                                && state.is_candidate_of(r, *c, num)
+                                && !overlap.any(|coord| coord == (r, *c))
+                            {
+                                Some((r, *c))
+                            } else {
+                                None
+                            }
+                        })
+                    })
+                    .collect();
+
+                if remove.is_empty() {
+                    continue 'outer;
+                }
+
+                return Some(FishInfo {
+                    size,
+                    base_set: base_rows.iter().map(|r| House::Row(*r)).collect(),
+                    cover_set: cover_cols.iter().map(|c| House::Column(*c)).collect(),
+                    candidate: num,
+                    rem_cells: remove,
+                });
+            }
+        }
+    }
+    None
+}
+
+pub fn basic_fish_col_base<T>(
+    state: &T,
+    size: usize
+) -> Option<FishInfo>
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    for num in 1..=9 {
+        for base_cols in (0..9).combinations(size) {
+            'outer: for cover_rows in (0..9).combinations(size) {
+                for c in &base_cols {
+                    if state.cell_cnt_of_candidate_in_col(*c, num) == 0 {
+                        continue 'outer;
+                    }
+                }
+                for r in &cover_rows {
+                    if state.cell_cnt_of_candidate_in_row(*r, num) == 0 {
+                        continue 'outer;
+                    }
+                }
+
+                let overlap = base_cols.iter().flat_map(|c| {
+                    cover_rows
+                        .iter()
+                        .flat_map(move |r| overlap_region((0, *r), (1, *c)))
+                });
+
+                for c in base_cols.iter() {
+                    for r in 0..9 {
+                        if state.is_cell_empty(r, *c)
+                            && state.is_candidate_of(r, *c, num)
+                            && !overlap.clone().any(|coord| coord == (r, *c))
+                        {
+                            continue 'outer;
+                        }
+                    }
+                }
+
+                let remove: Vec<(usize, usize)> = cover_rows
+                    .iter()
+                    .flat_map(|r| {
+                        let mut overlap = overlap.clone();
+                        (0..9).filter_map(move |c| {
+                            if state.is_cell_empty(*r, c)
+                                && state.is_candidate_of(*r, c, num)
+                                && !overlap.any(|coord| coord == (*r, c))
+                            {
+                                Some((*r, c))
+                            } else {
+                                None
+                            }
+                        })
+                    })
+                    .collect();
+
+                if remove.is_empty() {
+                    continue 'outer;
+                }
+
+                return Some(FishInfo {
+                    size,
+                    base_set: base_cols.iter().map(|c| House::Column(*c)).collect(),
+                    cover_set: cover_rows.iter().map(|r| House::Row(*r)).collect(),
+                    candidate: num,
+                    rem_cells: remove,
+                });
+            }
+        }
+    }
+    None
 }
 
 #[derive(Clone, Debug)]
 pub struct FishInfo {
-    size: usize,
-    base_set: Vec<House>,
-    cover_set: Vec<House>,
-    candidate: i8,
+    pub size: usize,
+    pub base_set: Vec<House>,
+    pub cover_set: Vec<House>,
+    pub candidate: i8,
+    pub rem_cells: Vec<(usize, usize)>,
 }
 
 #[derive(Default)]
-pub struct Fish(pub Option<FishInfo>);
-impl<T> Technique<T> for Fish
+pub struct XWing(pub Option<FishInfo>);
+impl<T> Technique<T> for XWing
 where
-    T: State + TrackingCandidates,
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
 {
     fn analyze(&mut self, state: &T) {
-        for size in 2..8 {}
+        self.0 = basic_fish::<T, 2, 0, 0, 2>(state);
+        // self.0 = fish::<T, 2, 0, 0, 0, 2, 0>(state);
+        // self.0 = basic_fish_row_base(state, 2);
+        if self.0.is_some() {
+            return;
+        }
+        // self.0 = basic_fish_col_base(state, 2);
+        self.0 = basic_fish::<T, 0, 2, 2, 0>(state);
+        // self.0 = fish::<T, 0, 2, 0, 2, 0, 0>(state);
     }
     fn appliable(&self) -> bool {
         self.0.is_some()
     }
     fn score(&self) -> Option<f32> {
+        if self.0.is_some() {
+            return Some(3.2);
+        }
         None
+    }
+}
+impl<T> ReducingCandidates<T> for XWing
+where
+    T: State + TrackingCandidates + TrackingCellCountOfCandidate,
+{
+    fn option(&self) -> Option<super::ReducingCandidatesOption> {
+        self.0
+            .clone()
+            .map(|info| ReducingCandidatesOption(vec![(info.rem_cells, vec![info.candidate])]))
     }
 }
