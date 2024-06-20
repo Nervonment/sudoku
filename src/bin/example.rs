@@ -1,8 +1,9 @@
 use sudoku::{
-    generator::random_sudoku_puzzle_normal,
+    generator::{random_sudoku_puzzle_hard, random_sudoku_puzzle_normal},
     solver::{advanced::AdvancedSolver, Grader, Solver},
-    state::full_state::FullState,
+    state::{full_state::FullState, CandidatesSettable},
     techniques::{
+        fish::fish,
         hidden_subsets::{HiddenPair, HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
         locked_candidates::{Claiming, Pointing},
         naked_subsets::{NakedPair, NakedPairBlock, NakedPairColumn, NakedPairRow, NakedSubset},
@@ -11,15 +12,40 @@ use sudoku::{
         },
         Direct, ReducingCandidates,
     },
+    Grid,
 };
 
 fn main() {
-    let grid = random_sudoku_puzzle_normal();
+    // let mut grid = random_sudoku_puzzle_hard();
+    let grid = Grid([
+        [1, 7, 0, 2, 8, 0, 0, 0, 9],
+        [8, 2, 0, 9, 5, 0, 1, 7, 0],
+        [0, 0, 5, 7, 6, 1, 2, 8, 0],
+        [0, 0, 0, 8, 4, 6, 7, 0, 1],
+        [6, 0, 8, 1, 7, 2, 9, 0, 0],
+        [7, 4, 1, 3, 9, 5, 6, 2, 8],
+        [0, 6, 9, 5, 0, 7, 8, 0, 0],
+        [0, 1, 7, 0, 3, 8, 0, 9, 0],
+        [0, 8, 0, 0, 0, 9, 0, 0, 7],
+    ]);
+
+    let mut state = FullState::from(grid);
+
+    state.remove_candidate_of_cell(3, 0, 5);
+
+    fish(&state, 4, 3, 0, 0, 0, 3, 0);
+    fish(&state, 4, 0, 3, 0, 3, 0, 0);
+    // while !fish(&state, 4, 2, 0, 0, 0, 2, 0)
+    //     && !fish(&state, 4, 0, 2, 0, 2, 0, 0)
+    //     && !fish(&state, 4, 3, 0, 0, 0, 3, 0)
+    //     && !fish(&state, 4, 0, 3, 0, 3, 0, 0)
+    // {
+    //     grid = random_sudoku_puzzle_hard();
+    //     state = FullState::from(grid);
+    // }
     println!("The sudoku puzzle: ");
     println!("{}", grid);
     println!();
-
-    let state = FullState::from(grid);
 
     let direct_techniques: [(&mut dyn Direct<FullState>, &str); 5] = [
         (&mut HiddenSingle::default(), "HiddenSingle"),
