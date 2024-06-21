@@ -4,7 +4,7 @@ use crate::{
         TrackingCandidates, TrackingCellCountOfCandidate,
     },
     techniques::{
-        fish::XWing,
+        fish::{Jellyfish, Swordfish, XWing},
         hidden_subsets::HiddenPair,
         locked_candidates::{Claiming, Pointing},
         naked_subsets::{NakedPair, NakedSubset},
@@ -78,13 +78,15 @@ where
             }
         }
 
-        let reducing_techniques: [&mut dyn ReducingCandidates<T>; 6] = [
+        let reducing_techniques: [&mut dyn ReducingCandidates<T>; 8] = [
             &mut Pointing::default(),
             &mut Claiming::default(),
             &mut NakedPair::default(),
             &mut HiddenPair::default(),
-            &mut NakedSubset::default(),
             &mut XWing::default(),
+            &mut NakedSubset::default(),
+            &mut Swordfish::default(),
+            &mut Jellyfish::default(),
         ];
         // TODO: Fish, Unique Rectangle
 

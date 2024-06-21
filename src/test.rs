@@ -11,8 +11,7 @@ use crate::{
         full_state::FullState, simple_state::SimpleState, CandidatesSettable, Fillable, State,
         TrackingCandidateCountOfCell, TrackingCandidates, TrackingCellCountOfCandidate,
     },
-    techniques::fish::overlap_region,
-    utils::{block_idx_2_coord, coord_2_block_idx},
+    utils::{block_idx_2_coord, coord_2_block_idx, overlap_region},
 };
 
 #[test]
@@ -127,53 +126,6 @@ fn sudoku_state() {
     }
 }
 
-// #[test]
-// fn techniques_single() {
-//     for _ in 0..100 {
-//         let puzzle = random_sudoku_puzzle_normal();
-//         let mut puzzle = FullState::from(puzzle);
-//         let res_hidden_single_row = hidden_single_row(&puzzle);
-//         let res_hidden_single_col = hidden_single_col(&puzzle);
-//         let res_hidden_single_blk = hidden_single_blk(&puzzle);
-//         let res_naked_single = naked_single(&puzzle);
-//         let singles = [
-//             res_hidden_single_row,
-//             res_hidden_single_col,
-//             res_hidden_single_blk,
-//             res_naked_single,
-//         ];
-//         for single in singles {
-//             if single.is_some() {
-//                 let (r, c, num) = single.unwrap();
-//                 puzzle.fill_cell(r, c, num);
-//                 assert!(judge_sudoku(&puzzle.grid()).0);
-//                 puzzle.unfill_cell(r, c);
-//             }
-//         }
-//     }
-// }
-
-// #[test]
-// fn techniques_pair() {
-//     for _ in 0..10 {
-//         let mut res_hidden_pair_row = None;
-//         let mut puzzle = random_sudoku_puzzle_normal();
-//         while res_hidden_pair_row.is_none() {
-//             puzzle = random_sudoku_puzzle_normal();
-//             let puzzle = FullState::from(puzzle);
-//             res_hidden_pair_row = hidden_pair_row(&puzzle);
-//         }
-//         let mut puzzle = FullState::from(puzzle);
-//         let ((r1, c1), _, (r2, c2), _, num1, num2) = res_hidden_pair_row.clone().unwrap();
-//         let nums: Vec<i8> = (1..=9).filter(|n| *n != num1 && *n != num2).collect();
-//         for num in &nums {
-//             puzzle.remove_candidate_of_cell(r1, c1, *num);
-//             puzzle.remove_candidate_of_cell(r2, c2, *num);
-//         }
-//         let res_hidden_pair_row_1 = hidden_pair_row(&puzzle);
-//         assert_ne!(res_hidden_pair_row, res_hidden_pair_row_1);
-//     }
-// }
 #[test]
 fn generate_sudoku() {
     println!("generating extraeasy puzzle");

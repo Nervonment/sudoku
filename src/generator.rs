@@ -137,7 +137,7 @@ pub fn random_sudoku_puzzle_hard() -> Grid {
 pub fn random_sudoku_puzzle_extrahard() -> Grid {
     random_sudoku_puzzle::<StochasticSolver, AdvancedSolver, f32>(
         45,
-        55.0 * 2.6 * 7.2f32.ln(),
+        55.0 * 2.6 * 6.0f32.ln(),
         55.0 * 3.2 * 12.0f32.ln(),
     )
 }

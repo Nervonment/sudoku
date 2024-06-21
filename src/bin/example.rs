@@ -1,8 +1,9 @@
 use sudoku::{
-    generator::random_sudoku_puzzle_normal,
+    generator::random_sudoku_puzzle_hard,
     solver::{advanced::AdvancedSolver, Grader, Solver},
     state::full_state::FullState,
     techniques::{
+        fish::XWing,
         hidden_subsets::{HiddenPair, HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
         locked_candidates::{Claiming, Pointing},
         naked_subsets::{NakedPair, NakedPairBlock, NakedPairColumn, NakedPairRow, NakedSubset},
@@ -14,12 +15,13 @@ use sudoku::{
 };
 
 fn main() {
-    let grid = random_sudoku_puzzle_normal();
+    let grid = random_sudoku_puzzle_hard();
     println!("The sudoku puzzle: ");
     println!("{}", grid);
     println!();
 
     let state = FullState::from(grid);
+
     let direct_techniques: [(&mut dyn Direct<FullState>, &str); 5] = [
         (&mut HiddenSingle::default(), "HiddenSingle"),
         (&mut HiddenSingleBlock::default(), "HiddenSingleBlock"),
@@ -37,7 +39,7 @@ fn main() {
     }
     println!();
 
-    let reducing_techniques: [(&mut dyn ReducingCandidates<FullState>, &str); 11] = [
+    let reducing_techniques: [(&mut dyn ReducingCandidates<FullState>, &str); 12] = [
         (&mut Pointing::default(), "Pointing"),
         (&mut Claiming::default(), "Claiming"),
         (&mut NakedPair::default(), "NakedPair"),
@@ -49,6 +51,7 @@ fn main() {
         (&mut HiddenPairRow::default(), "HiddenPairRow"),
         (&mut HiddenPairColumn::default(), "HiddenPairColumn"),
         (&mut NakedSubset::default(), "NakedSubset"),
+        (&mut XWing::default(), "X-Wing"),
     ];
 
     println!("Reducing-candidates techniques appliable: ");
