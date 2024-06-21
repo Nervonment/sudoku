@@ -70,6 +70,7 @@ pub enum House {
     Block(usize),
 }
 
+pub mod fish;
 pub mod hidden_subsets;
 pub mod locked_candidates;
 pub mod naked_subsets;

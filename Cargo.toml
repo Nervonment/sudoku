@@ -7,9 +7,18 @@ default-run = "example"
 [dependencies]
 criterion = "0.5.1"
 rand = "0.8.5"
+itertools = "0.13.0"
 
 [[bench]]
 name = "solver_benches"
+harness = false
+
+[[bench]]
+name = "generator_benches"
+harness = false
+
+[[bench]]
+name = "techniques_benches"
 harness = false
 
 [[bin]]
