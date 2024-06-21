@@ -100,7 +100,7 @@ pub fn random_sudoku_puzzle_extraeasy() -> Grid {
     random_sudoku_puzzle::<StochasticSolver, AdvancedSolver, f32>(
         min_blank_cnt,
         0.0,
-        min_blank_cnt as f32 * 1.25,
+        min_blank_cnt as f32 * 1.3,
     )
 }
 
