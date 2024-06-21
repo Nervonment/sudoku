@@ -3,7 +3,7 @@ use sudoku::{
     solver::{advanced::AdvancedSolver, Grader, Solver},
     state::full_state::FullState,
     techniques::{
-        fish::XWing,
+        fish::{Jellyfish, Swordfish, XWing},
         hidden_subsets::{HiddenPair, HiddenPairBlock, HiddenPairColumn, HiddenPairRow},
         locked_candidates::{Claiming, Pointing},
         naked_subsets::{NakedPair, NakedPairBlock, NakedPairColumn, NakedPairRow, NakedSubset},
@@ -39,7 +39,7 @@ fn main() {
     }
     println!();
 
-    let reducing_techniques: [(&mut dyn ReducingCandidates<FullState>, &str); 12] = [
+    let reducing_techniques: [(&mut dyn ReducingCandidates<FullState>, &str); 14] = [
         (&mut Pointing::default(), "Pointing"),
         (&mut Claiming::default(), "Claiming"),
         (&mut NakedPair::default(), "NakedPair"),
@@ -52,6 +52,8 @@ fn main() {
         (&mut HiddenPairColumn::default(), "HiddenPairColumn"),
         (&mut NakedSubset::default(), "NakedSubset"),
         (&mut XWing::default(), "X-Wing"),
+        (&mut Swordfish::default(), "Swordfish"),
+        (&mut Jellyfish::default(), "Jellyfish"),
     ];
 
     println!("Reducing-candidates techniques appliable: ");
